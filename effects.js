@@ -17,7 +17,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "♥",
     blurb: "Hearts drift upward from the word",
-    defaults: { count: 24, size: 30, speed: 1, spread: 90, life: 2600, sway: 1, origin: "word", layer: "behind" },
+    defaults: { count: 24, size: 70, speed: 1, spread: 90, life: 2600, sway: 1, origin: "word", layer: "behind" },
   },
   {
     id: "kiss",
@@ -25,7 +25,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "💋",
     blurb: "Kisses burst outward and tumble down",
-    defaults: { count: 16, size: 34, speed: 1.2, spread: 360, life: 1900, sway: 0.2, origin: "word", layer: "behind" },
+    defaults: { count: 16, size: 70, speed: 1.2, spread: 360, life: 1900, sway: 0.2, origin: "word", layer: "behind" },
   },
   {
     id: "balloons",
@@ -33,7 +33,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "🎈",
     blurb: "Balloons rise slowly, swaying as they go",
-    defaults: { count: 12, size: 46, speed: 0.6, spread: 60, life: 5200, sway: 1.6, origin: "bottom", layer: "behind" },
+    defaults: { count: 12, size: 70, speed: 0.6, spread: 60, life: 5200, sway: 1.6, origin: "bottom", layer: "behind" },
   },
   {
     id: "confetti",
@@ -41,7 +41,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "▰",
     blurb: "A shower of spinning paper",
-    defaults: { count: 70, size: 11, speed: 1.4, spread: 160, life: 2400, sway: 0.4, origin: "word", layer: "front" },
+    defaults: { count: 70, size: 70, speed: 1.4, spread: 160, life: 2400, sway: 0.4, origin: "word", layer: "front" },
   },
   {
     id: "sparkles",
@@ -49,7 +49,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "✦",
     blurb: "Twinkles that flare around the word",
-    defaults: { count: 28, size: 18, speed: 0.5, spread: 360, life: 1500, sway: 0.3, origin: "word", layer: "front" },
+    defaults: { count: 28, size: 70, speed: 0.5, spread: 360, life: 1500, sway: 0.3, origin: "word", layer: "front" },
   },
   {
     id: "stardust",
@@ -57,7 +57,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "✧",
     blurb: "Slow glittering fall from above",
-    defaults: { count: 40, size: 14, speed: 0.5, spread: 220, life: 3400, sway: 1.2, origin: "top", layer: "behind" },
+    defaults: { count: 40, size: 70, speed: 0.5, spread: 220, life: 3400, sway: 1.2, origin: "top", layer: "behind" },
   },
 
   {
@@ -66,7 +66,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "🔥",
     blurb: "Fire licks upward and shrinks away",
-    defaults: { count: 30, size: 26, speed: 1, spread: 50, life: 1800, sway: 0.6, origin: "word", layer: "behind" },
+    defaults: { count: 30, size: 70, speed: 1, spread: 50, life: 1800, sway: 0.6, origin: "word", layer: "behind" },
   },
   {
     id: "snow",
@@ -74,7 +74,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "❄",
     blurb: "Flakes drift down across the screen",
-    defaults: { count: 60, size: 16, speed: 0.5, spread: 120, life: 6000, sway: 1.4, origin: "top", layer: "behind" },
+    defaults: { count: 60, size: 70, speed: 0.5, spread: 120, life: 6000, sway: 1.4, origin: "top", layer: "behind" },
   },
   {
     id: "bubbles",
@@ -82,7 +82,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "◌",
     blurb: "Soft bubbles wobble upward",
-    defaults: { count: 26, size: 26, speed: 0.7, spread: 70, life: 4200, sway: 1.2, origin: "word", layer: "behind" },
+    defaults: { count: 26, size: 70, speed: 0.7, spread: 70, life: 4200, sway: 1.2, origin: "word", layer: "behind" },
   },
   {
     id: "petals",
@@ -90,7 +90,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "❀",
     blurb: "Blossom tumbles down on the breeze",
-    defaults: { count: 34, size: 22, speed: 0.6, spread: 160, life: 4800, sway: 1.5, origin: "top", layer: "behind" },
+    defaults: { count: 34, size: 70, speed: 0.6, spread: 160, life: 4800, sway: 1.5, origin: "top", layer: "behind" },
   },
   {
     id: "notes",
@@ -98,7 +98,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "♪",
     blurb: "Notes float up from the word",
-    defaults: { count: 18, size: 30, speed: 0.9, spread: 80, life: 2800, sway: 1.1, origin: "word", layer: "behind" },
+    defaults: { count: 18, size: 70, speed: 0.9, spread: 80, life: 2800, sway: 1.1, origin: "word", layer: "behind" },
   },
   {
     id: "fireworks",
@@ -106,7 +106,7 @@ export const EFFECTS = [
     kind: "burst",
     icon: "✺",
     blurb: "A bright shell bursts and falls away",
-    defaults: { count: 90, size: 7, speed: 1.6, spread: 360, life: 2000, sway: 0.2, origin: "centre", layer: "front" },
+    defaults: { count: 90, size: 70, speed: 1.6, spread: 360, life: 2000, sway: 0.2, origin: "centre", layer: "front" },
   },
 
   /* ---- text effects ---- */
@@ -511,34 +511,39 @@ export function createEngine({ behind, front, stage = document.body, density = 1
      the plain text symbols kept working. Rasterising once at a natural size,
      with no transform in play, then scaling the bitmap, renders everywhere. */
 
-  // Sized for the largest particles a 3x size multiplier produces on a retina
-  // screen, so a scaled-up emoji still blits close to 1:1 rather than soft.
-  // Sprites are built lazily, so only the glyphs a song actually uses cost
-  // anything.
-  const GLYPH_EM = 192;
-  const GLYPH_BOX = 256; // padding, since emoji often overflow their em box
-  const GLYPH_RATIO = GLYPH_BOX / GLYPH_EM;
-  const GLYPH_FONT = `${GLYPH_EM}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  // A sprite is built at whatever resolution the biggest particle using it
+  // actually needs, and rebuilt larger if a bigger one turns up later. A fixed
+  // resolution either wasted memory on small bursts or blitted soft once the
+  // size multiplier pushed particles past it.
+  const GLYPH_RATIO = 4 / 3; // box / em: padding for emoji that overflow the em box
+  const GLYPH_MIN_EM = 96;
+  const GLYPH_MAX_EM = 512;
 
   const glyphSprites = new Map();
 
-  function glyphSprite(glyph) {
-    let sprite = glyphSprites.get(glyph);
-    if (sprite) return sprite;
+  function glyphSprite(glyph, neededEm) {
+    const want = Math.min(GLYPH_MAX_EM, Math.max(GLYPH_MIN_EM, Math.ceil(neededEm)));
+    const cached = glyphSprites.get(glyph);
+    if (cached && cached.em >= want) return cached.canvas;
 
-    sprite = document.createElement("canvas");
-    sprite.width = GLYPH_BOX;
-    sprite.height = GLYPH_BOX;
+    // Grow in doublings so a burst of slowly increasing sizes cannot rebuild
+    // the sprite on every frame.
+    const em = Math.min(GLYPH_MAX_EM, Math.max(want, (cached?.em ?? 0) * 2));
+    const box = Math.round(em * GLYPH_RATIO);
 
-    const sctx = sprite.getContext("2d");
-    sctx.font = GLYPH_FONT;
+    const canvas = document.createElement("canvas");
+    canvas.width = box;
+    canvas.height = box;
+
+    const sctx = canvas.getContext("2d");
+    sctx.font = `${em}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
     sctx.textAlign = "center";
     sctx.textBaseline = "middle";
     sctx.fillStyle = "#fff"; // colour emoji ignore this; symbol glyphs use it
-    sctx.fillText(glyph, GLYPH_BOX / 2, GLYPH_BOX / 2);
+    sctx.fillText(glyph, box / 2, box / 2);
 
-    glyphSprites.set(glyph, sprite);
-    return sprite;
+    glyphSprites.set(glyph, { canvas, em });
+    return canvas;
   }
 
   // Canvas state mirrored in JS, so it is only written when it actually changes.
@@ -589,7 +594,8 @@ export function createEngine({ behind, front, stage = document.body, density = 1
     if (p.kind === "glyph") {
       clearShadow(ctx);
       const box = size * GLYPH_RATIO;
-      ctx.drawImage(glyphSprite(p.glyph), -box / 2, -box / 2, box, box);
+      // The sprite needs one em per device pixel the glyph will occupy.
+      ctx.drawImage(glyphSprite(p.glyph, size * ratio), -box / 2, -box / 2, box, box);
       return;
     }
 

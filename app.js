@@ -171,6 +171,15 @@ function estimatedPositionMs() {
   return state.positionMs + (performance.now() - state.sampledAt);
 }
 
+/**
+ * Playback position shifted by the timing offset: the clock the lyrics are
+ * read against. Everything tied to a word — which line is active, and when an
+ * effect fires — works from this, so they can never drift apart.
+ */
+function lyricClockMs() {
+  return estimatedPositionMs() + cfg.leadMs;
+}
+
 function indexAt(seconds) {
   let lo = 0;
   let hi = state.lines.length - 1;
@@ -196,7 +205,7 @@ function rebuildCues() {
   }
   state.cues = buildCues(state.lines, loadSong(state.trackId));
   state.nextCue = 0;
-  seekCues(estimatedPositionMs());
+  seekCues(lyricClockMs());
 }
 
 // Move the cue pointer to the first cue at or after `positionMs`, so seeking
@@ -234,11 +243,14 @@ function runCues(positionMs) {
 
 function tick() {
   if (state.lines.length) {
-    const positionMs = estimatedPositionMs();
-    // A small lead makes a line settle as it is sung rather than just after.
-    const index = indexAt((positionMs + cfg.leadMs) / 1000);
+    // One clock for both: the timing offset shifts the lyrics, and an effect
+    // belongs to a word, so it has to move with it. Running the cues off the
+    // raw position meant a 950ms delay fired every effect 950ms before its
+    // word lit up.
+    const atMs = lyricClockMs();
+    const index = indexAt(atMs / 1000);
     if (index >= 0) focusLine(index);
-    runCues(positionMs);
+    runCues(atMs);
   }
   requestAnimationFrame(tick);
 }
