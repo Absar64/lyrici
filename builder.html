@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lyrics · Effects builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="effects.css" />
+<link rel="stylesheet" href="builder.css" />
+</head>
+<body>
+  <canvas class="fx fx--behind" id="fx-behind"></canvas>
+
+  <div class="builder">
+    <!-- effect palette -->
+    <aside class="rail">
+      <h1 class="rail__title">Effects</h1>
+      <p class="rail__hint">
+        Drag an effect onto a word. Click a word first (shift-click a second one)
+        to cover a phrase.
+      </p>
+      <div class="group__name">Background</div>
+      <div id="palette-burst"></div>
+      <div class="group__name">Text</div>
+      <div id="palette-text"></div>
+    </aside>
+
+    <!-- the song's lyrics, as drop targets -->
+    <main class="sheet">
+      <div class="sheet__head">
+        <img class="sheet__art" id="art" alt="" />
+        <div>
+          <div class="sheet__title" id="title">No song loaded</div>
+          <div class="sheet__artist" id="artist"></div>
+        </div>
+        <div class="sheet__spacer"></div>
+        <select id="song-picker" aria-label="Song"></select>
+        <a class="link" href="./">← lyrics</a>
+      </div>
+      <div class="score" id="score"></div>
+    </main>
+
+    <!-- assignments on this song -->
+    <aside class="rail rail--right">
+      <div class="rail__head">
+        <h2 class="rail__title">On this song</h2>
+        <button class="mini" id="rehearse" type="button">Rehearse</button>
+      </div>
+      <p class="rail__hint" id="count"></p>
+      <div id="cards"></div>
+      <div class="card__row" id="bulk" hidden>
+        <button class="mini mini--danger" id="clear" type="button">Remove all</button>
+      </div>
+
+      <div class="group__name">Library</div>
+      <p class="rail__hint" id="library-note"></p>
+      <div class="card__row">
+        <button class="mini" id="export-song" type="button">Export song</button>
+        <button class="mini" id="export-all" type="button">Export all</button>
+      </div>
+      <div class="card__row">
+        <button class="mini" id="import" type="button">Import a file…</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+    </aside>
+  </div>
+
+  <canvas class="fx fx--front" id="fx-front"></canvas>
+
+  <script src="builder-ui.js" type="module"></script>
+</body>
+</html>

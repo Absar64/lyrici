@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lyrics · Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&family=Nunito:wght@300;400;500;600&family=Manrope:wght@300;400;500;600&family=Comfortaa:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="settings">
+    <form class="panel" id="panel">
+      <div class="panel__head">
+        <h1 class="panel__title">Settings</h1>
+        <a class="link" href="./">← back to lyrics</a>
+      </div>
+      <!-- fields are built from the schema in settings-ui.js -->
+      <div id="fields"></div>
+      <div class="panel__actions">
+        <button class="btn" type="button" id="reset">Reset to defaults</button>
+      </div>
+    </form>
+
+    <div class="preview" id="preview">
+      <span class="preview__hint">live preview</span>
+      <div class="bg is-on" id="pv-bg"></div>
+      <div class="bg-veil"></div>
+      <div class="shell">
+        <header class="meta">
+          <img class="meta__art" id="pv-art" alt="" />
+          <div class="meta__text">
+            <div class="meta__title">Placeholder Track</div>
+            <div class="meta__artist">Placeholder Artist</div>
+          </div>
+        </header>
+        <section class="stage" id="pv-stage">
+          <div class="lyrics" id="pv-lyrics"></div>
+        </section>
+        <footer class="footer">
+          <span>synced lyrics · lrclib.net</span>
+        </footer>
+      </div>
+    </div>
+  </div>
+
+  <script src="settings-ui.js" type="module"></script>
+</body>
+</html>

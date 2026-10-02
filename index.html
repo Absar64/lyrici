@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lyrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&family=Nunito:wght@300;400;500;600&family=Manrope:wght@300;400;500;600&family=Comfortaa:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="effects.css" />
+</head>
+<body>
+  <div class="bg" id="bg-a"></div>
+  <div class="bg" id="bg-b"></div>
+  <div class="bg-veil"></div>
+  <canvas class="fx fx--behind" id="fx-behind"></canvas>
+
+  <main class="shell">
+    <header class="meta" id="meta" hidden>
+      <img class="meta__art" id="art" alt="" />
+      <div class="meta__text">
+        <div class="meta__title" id="title"></div>
+        <div class="meta__artist" id="artist"></div>
+      </div>
+    </header>
+
+    <section class="stage" id="stage">
+      <div class="lyrics" id="lyrics"></div>
+    </section>
+
+    <div class="notice" id="notice">
+      <p class="notice__lead">Spotify Lyrics</p>
+      <p class="notice__sub">Synced lyrics for whatever you're playing.</p>
+      <button class="btn" id="login">Connect Spotify</button>
+    </div>
+
+    <footer class="footer">
+      <span id="status"></span>
+      <span class="footer__right">
+        <a class="link" href="builder.html">effects</a>
+        <a class="link" href="settings.html">settings</a>
+        <button class="link" id="logout" hidden>sign out</button>
+      </span>
+    </footer>
+  </main>
+
+  <canvas class="fx fx--front" id="fx-front"></canvas>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

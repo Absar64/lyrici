@@ -1,0 +1,13 @@
+# Local tooling and editor settings
+.claude/
+.vscode/
+.idea/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Dependencies and build output
+node_modules/
+dist/

@@ -1,0 +1,234 @@
+/* Word targeting, the particle canvases, and every text-effect animation. */
+
+.fx {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.fx--behind { z-index: 1; }
+.fx--front { z-index: 5; }
+
+.shell { z-index: 2; }
+
+[data-effects="off"] .fx { display: none; }
+
+.word {
+  display: inline-block;
+  transform-origin: center bottom;
+}
+
+/* Only hint the compositor for words that are actually animating. Setting
+   will-change on every word asks the browser to prepare a layer for each of
+   several hundred spans, which costs memory and paint time for no gain. */
+.word[class*="fx-"] {
+  will-change: transform, color;
+}
+
+/* ---------- spotlight: the stage dims, one word keeps its light ----------
+   Scoped to words rather than to a particular container, so the lyrics view
+   and the builder's lyric sheet both darken the same way. */
+
+.is-spotlit .word:not(.is-spotlit-word) {
+  opacity: var(--fx-dim, 0.06);
+  transition: opacity 0.35s ease;
+}
+
+.is-spotlit .word.is-spotlit-word { transition: opacity 0.35s ease; }
+
+.word.fx-spotlight {
+  color: var(--fx-color, #fff);
+  animation: fx-spotlight var(--fx-duration, 1600ms) ease both;
+}
+
+@keyframes fx-spotlight {
+  0% { transform: scale(1); text-shadow: 0 0 0 transparent; }
+  18% { transform: scale(var(--fx-scale, 1.12)); text-shadow: 0 0 36px rgba(255, 255, 255, 0.55); }
+  82% { transform: scale(var(--fx-scale, 1.12)); text-shadow: 0 0 36px rgba(255, 255, 255, 0.55); }
+  100% { transform: scale(1); text-shadow: 0 0 0 transparent; }
+}
+
+/* ---------- slam ---------- */
+
+.word.fx-slam {
+  color: var(--fx-color, #fff);
+  animation: fx-slam var(--fx-duration, 700ms) cubic-bezier(0.2, 1.6, 0.3, 1) both;
+}
+
+@keyframes fx-slam {
+  0% { transform: scale(var(--fx-scale, 3.2)) translateY(-26%); filter: blur(7px); opacity: 0; }
+  38% { transform: scale(0.88) translateY(0); filter: blur(0); opacity: 1; }
+  54% { transform: scale(1.12); }
+  70% { transform: scale(0.97); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- big & loud ---------- */
+
+.word.fx-emphasis {
+  color: var(--fx-color, #fff);
+  animation: fx-emphasis var(--fx-duration, 900ms) cubic-bezier(0.3, 1.4, 0.4, 1) both;
+}
+
+@keyframes fx-emphasis {
+  0% { transform: scale(1); }
+  30% { transform: scale(var(--fx-scale, 1.7)); letter-spacing: 0.04em; text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+  60% { transform: scale(calc(var(--fx-scale, 1.7) * 0.94)); }
+  100% { transform: scale(1); text-shadow: none; }
+}
+
+/* ---------- shake ---------- */
+
+.word.fx-shake {
+  color: var(--fx-color, #fff);
+  animation: fx-shake var(--fx-duration, 600ms) linear both;
+}
+
+@keyframes fx-shake {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  10% { transform: translate(-0.12em, 0.04em) scale(var(--fx-scale, 1.08)); }
+  25% { transform: translate(0.1em, -0.05em) scale(var(--fx-scale, 1.08)); }
+  40% { transform: translate(-0.08em, -0.03em) scale(var(--fx-scale, 1.08)); }
+  55% { transform: translate(0.07em, 0.04em) scale(var(--fx-scale, 1.08)); }
+  70% { transform: translate(-0.05em, 0) scale(1.03); }
+  85% { transform: translate(0.03em, 0) scale(1.01); }
+}
+
+/* ---------- glow ---------- */
+
+.word.fx-glow { animation: fx-glow var(--fx-duration, 1400ms) ease-in-out both; }
+
+@keyframes fx-glow {
+  0% { transform: scale(1); text-shadow: none; }
+  35% {
+    transform: scale(var(--fx-scale, 1.1));
+    color: var(--fx-color, #ffd9a0);
+    text-shadow: 0 0 10px var(--fx-color, #ffd9a0), 0 0 42px var(--fx-color, #ffd9a0), 0 0 80px var(--fx-color, #ffd9a0);
+  }
+  100% { transform: scale(1); text-shadow: none; }
+}
+
+/* ---------- colour flash ---------- */
+
+.word.fx-flash { animation: fx-flash var(--fx-duration, 800ms) steps(1, end) both; }
+
+@keyframes fx-flash {
+  0%, 100% { color: inherit; transform: scale(1); }
+  12% { color: var(--fx-color, #ff5f8f); transform: scale(var(--fx-scale, 1)); }
+  28% { color: inherit; }
+  44% { color: var(--fx-color, #ff5f8f); transform: scale(var(--fx-scale, 1)); }
+  62% { color: inherit; }
+  78% { color: var(--fx-color, #ff5f8f); }
+}
+
+/* ---------- bounce ---------- */
+
+.word.fx-bounce {
+  color: var(--fx-color, #fff);
+  animation: fx-bounce var(--fx-duration, 900ms) cubic-bezier(0.28, 0.84, 0.42, 1) both;
+}
+
+@keyframes fx-bounce {
+  0% { transform: translateY(0) scale(1); }
+  22% { transform: translateY(-0.55em) scale(var(--fx-scale, 1.3)); }
+  44% { transform: translateY(0) scaleX(1.18) scaleY(0.82); }
+  60% { transform: translateY(-0.18em) scale(1.06); }
+  78% { transform: translateY(0) scaleX(1.08) scaleY(0.94); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* ---------- glitch ---------- */
+
+.word.fx-glitch { animation: fx-glitch var(--fx-duration, 700ms) steps(2, end) both; }
+
+@keyframes fx-glitch {
+  0%, 100% { transform: translate(0) scale(1); text-shadow: none; }
+  15% {
+    transform: translate(-0.05em, 0.02em) scale(var(--fx-scale, 1.1));
+    text-shadow: 0.05em 0 var(--fx-color, #7dd3fc), -0.05em 0 #ff5f8f;
+  }
+  35% {
+    transform: translate(0.05em, -0.02em);
+    text-shadow: -0.06em 0 var(--fx-color, #7dd3fc), 0.06em 0 #ff5f8f;
+  }
+  55% {
+    transform: translate(-0.03em, 0.03em) scale(var(--fx-scale, 1.1));
+    text-shadow: 0.04em 0.02em var(--fx-color, #7dd3fc), -0.04em -0.02em #ff5f8f;
+  }
+  75% { transform: translate(0.02em, 0); text-shadow: -0.02em 0 var(--fx-color, #7dd3fc), 0.02em 0 #ff5f8f; }
+}
+
+/* ---------- neon flicker ---------- */
+
+.word.fx-neon { animation: fx-neon var(--fx-duration, 1600ms) linear both; }
+
+@keyframes fx-neon {
+  0%, 18%, 24%, 44% { color: inherit; text-shadow: none; }
+  20%, 30%, 50%, 100% {
+    color: var(--fx-color, #8be9fd);
+    transform: scale(var(--fx-scale, 1.08));
+    text-shadow: 0 0 6px var(--fx-color, #8be9fd), 0 0 22px var(--fx-color, #8be9fd), 0 0 48px var(--fx-color, #8be9fd);
+  }
+  27% { color: inherit; text-shadow: none; }
+  47% { color: inherit; text-shadow: none; }
+}
+
+/* ---------- rainbow sweep ---------- */
+
+.word.fx-rainbow {
+  color: var(--fx-color, #ff5f8f);
+  animation: fx-rainbow var(--fx-duration, 1800ms) linear both;
+}
+
+@keyframes fx-rainbow {
+  0% { filter: hue-rotate(0deg); transform: scale(1); }
+  25% { transform: scale(var(--fx-scale, 1.15)); }
+  100% { filter: hue-rotate(360deg); transform: scale(1); }
+}
+
+/* ---------- rise ---------- */
+
+.word.fx-rise {
+  color: var(--fx-color, #fff);
+  animation: fx-rise var(--fx-duration, 1000ms) cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+@keyframes fx-rise {
+  0% { transform: translateY(0.7em) scale(var(--fx-scale, 1)); opacity: 0; filter: blur(5px); }
+  60% { opacity: 1; filter: blur(0); }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* ---------- heartbeat ---------- */
+
+.word.fx-pulse {
+  color: var(--fx-color, #fff);
+  animation: fx-pulse var(--fx-duration, 1200ms) ease-out both;
+}
+
+@keyframes fx-pulse {
+  0% { transform: scale(1); }
+  12% { transform: scale(var(--fx-scale, 1.35)); }
+  24% { transform: scale(1.02); }
+  36% { transform: scale(calc(var(--fx-scale, 1.35) * 0.88)); }
+  50% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
+
+/* ---------- screen shake, shared by any effect that asks for it ---------- */
+
+body.fx-screenshake { animation: fx-screenshake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+@keyframes fx-screenshake {
+  0%, 100% { transform: translate(0, 0); }
+  12% { transform: translate(-7px, 4px); }
+  26% { transform: translate(6px, -5px); }
+  40% { transform: translate(-5px, -3px); }
+  56% { transform: translate(4px, 4px); }
+  72% { transform: translate(-3px, 1px); }
+  88% { transform: translate(2px, -1px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word[class*="fx-"], body.fx-screenshake { animation: none; }
+}
