@@ -72,6 +72,7 @@ const SCHEMA = [
     ["motion", "Motion", "select", { choices: ["auto", "full", "reduced"], labels: ["follow device", "always full", "always reduced"] }],
     ["effectsEnabled", "Play lyric effects", "toggle"],
     ["effectDensity", "Particle amount", "range", { min: 0.2, max: 2.5, step: 0.1, unit: "×" }],
+    ["effectScale", "Effect size", "range", { min: 0.2, max: 6, step: 0.1, unit: "×" }],
   ]],
 
   ["Behaviour", [

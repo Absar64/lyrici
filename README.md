@@ -65,6 +65,10 @@ an already-open lyrics tab without a reload.
 | Header | Show header / artwork / artist, alignment, artwork size, title and artist size |
 | Behaviour | Status bar on/off, Spotify poll interval |
 
+Out of the box lyrics are held back by 950ms and bursts are drawn at three
+times their authored size. Both are settings: **Timing offset** and
+**Effect size** under Effects.
+
 **Reset to defaults** at the bottom of the panel puts everything back.
 
 The **Backup** section exports your settings as a JSON file and loads them back

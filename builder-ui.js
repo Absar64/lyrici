@@ -46,12 +46,17 @@ const state = {
   songs: [],            // picker entries: { id, track, label }
 };
 
-applySettings(loadSettings());
+const appearance = loadSettings();
+applySettings(appearance);
 
+// The preview takes the same density and size multipliers as playback, so what
+// you tune here is what you get on the lyrics screen.
 const engine = createEngine({
   behind: document.getElementById("fx-behind"),
   front: document.getElementById("fx-front"),
   stage: el.score,
+  density: appearance.effectDensity,
+  sizeScale: appearance.effectScale,
 });
 
 /* ================= palette ================= */

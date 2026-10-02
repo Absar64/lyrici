@@ -424,7 +424,7 @@ function spawn(effect, params, rect, view) {
 
 /* ================= runtime ================= */
 
-export function createEngine({ behind, front, stage = document.body, density = 1 }) {
+export function createEngine({ behind, front, stage = document.body, density = 1, sizeScale = 1 }) {
   const canvases = { behind, front };
   const contexts = {
     behind: behind.getContext("2d"),
@@ -435,6 +435,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
   let running = false;
   let last = 0;
   let scale = density;
+  let sizes = sizeScale;
   let ratio = 1;
 
   // Frame cost, smoothed. Used to thin out new bursts on slower machines
@@ -510,8 +511,12 @@ export function createEngine({ behind, front, stage = document.body, density = 1
      the plain text symbols kept working. Rasterising once at a natural size,
      with no transform in play, then scaling the bitmap, renders everywhere. */
 
-  const GLYPH_EM = 144;
-  const GLYPH_BOX = 192; // padding, since emoji often overflow their em box
+  // Sized for the largest particles a 3x size multiplier produces on a retina
+  // screen, so a scaled-up emoji still blits close to 1:1 rather than soft.
+  // Sprites are built lazily, so only the glyphs a song actually uses cost
+  // anything.
+  const GLYPH_EM = 192;
+  const GLYPH_BOX = 256; // padding, since emoji often overflow their em box
   const GLYPH_RATIO = GLYPH_BOX / GLYPH_EM;
   const GLYPH_FONT = `${GLYPH_EM}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
 
@@ -702,7 +707,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
     const room = MAX_PARTICLES - (pools.behind.length + pools.front.length);
     const count = Math.min(wanted, Math.max(1, room));
 
-    pool.push(...spawn(effect, { ...params, count }, rect, view));
+    pool.push(...spawn(effect, { ...params, count, size: params.size * sizes }, rect, view));
 
     // If the cap is still exceeded, the oldest particles make way: they are
     // the ones already fading out, so dropping them is the least visible.
@@ -760,6 +765,10 @@ export function createEngine({ behind, front, stage = document.body, density = 1
     },
     setDensity(value) {
       scale = value;
+    },
+    /** Global multiplier on particle size, on top of each effect's own. */
+    setSizeScale(value) {
+      sizes = value;
     },
     clear() {
       pools.behind = [];

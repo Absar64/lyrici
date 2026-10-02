@@ -30,7 +30,7 @@ export const DEFAULTS = {
   nearCount: 2,            // lines either side treated as "near"
   inactiveBlur: 1.4,       // px
   scrollSpeed: 750,        // ms
-  leadMs: 220,             // highlight this far ahead of the timestamp
+  leadMs: -950,            // negative holds lines back; positive runs them early
 
   // background
   bgEnabled: true,
@@ -57,6 +57,7 @@ export const DEFAULTS = {
   // lyric effects (built per song in the effects builder)
   effectsEnabled: true,
   effectDensity: 1,
+  effectScale: 3,          // multiplies every burst's particle size
 
   // "auto" follows the device's reduce-motion setting, which iOS turns on
   // under Accessibility and in some battery modes. "full" ignores it.

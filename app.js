@@ -47,6 +47,7 @@ const engine = createEngine({
   front: document.getElementById("fx-front"),
   stage: el.lyrics,
   density: cfg.effectDensity,
+  sizeScale: cfg.effectScale,
 });
 
 /* ---------- presentation ---------- */
@@ -329,6 +330,7 @@ onSettingsChange((next) => {
   cfg = next;
   applySettings(cfg);
   engine.setDensity(cfg.effectDensity);
+  engine.setSizeScale(cfg.effectScale);
   requestAnimationFrame(recentre);
 });
 
