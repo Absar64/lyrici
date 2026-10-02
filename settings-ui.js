@@ -69,6 +69,7 @@ const SCHEMA = [
   ]],
 
   ["Effects", [
+    ["motion", "Motion", "select", { choices: ["auto", "full", "reduced"], labels: ["follow device", "always full", "always reduced"] }],
     ["effectsEnabled", "Play lyric effects", "toggle"],
     ["effectDensity", "Particle amount", "range", { min: 0.2, max: 2.5, step: 0.1, unit: "×" }],
   ]],
@@ -191,6 +192,31 @@ document.getElementById("export").addEventListener("click", () => {
 });
 
 const picker = document.getElementById("import-file");
+const pasteBox = document.getElementById("paste-box");
+const pasteText = document.getElementById("paste-text");
+
+// One path for both ways in: a picked file and pasted text differ only in how
+// the JSON is obtained.
+function applyImported(data) {
+  const summary = inspectSettings(data);
+  if (!summary.ok) {
+    say(summary.reason);
+    return false;
+  }
+
+  const source = summary.fromBackup ? " from a full backup" : "";
+  if (!confirm(`Apply ${summary.count} settings${source}? This replaces how the app currently looks.`)) return false;
+
+  const result = importSettings(data);
+  settings = result.settings;
+  buildForm();
+  render();
+
+  const ignored = result.ignored ? `, ${result.ignored} not recognised` : "";
+  say(`Applied ${result.applied} settings${ignored}.`);
+  return true;
+}
+
 document.getElementById("import").addEventListener("click", () => picker.click());
 
 picker.addEventListener("change", async () => {
@@ -203,23 +229,37 @@ picker.addEventListener("change", async () => {
     say("That file could not be read as JSON.");
     return;
   }
+  applyImported(data);
+});
 
-  const summary = inspectSettings(data);
-  if (!summary.ok) {
-    say(summary.reason);
+function closePaste() {
+  pasteBox.hidden = true;
+  pasteText.value = "";
+}
+
+document.getElementById("paste-open").addEventListener("click", () => {
+  pasteBox.hidden = !pasteBox.hidden;
+  if (!pasteBox.hidden) pasteText.focus();
+});
+
+document.getElementById("paste-cancel").addEventListener("click", closePaste);
+
+document.getElementById("paste-apply").addEventListener("click", () => {
+  const text = pasteText.value.trim();
+  if (!text) {
+    say("Nothing pasted yet.");
     return;
   }
 
-  const source = summary.fromBackup ? " from a full backup" : "";
-  if (!confirm(`Apply ${summary.count} settings${source}? This replaces how the app currently looks.`)) return;
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    say("That is not valid JSON.");
+    return;
+  }
 
-  const result = importSettings(data);
-  settings = result.settings;
-  buildForm();
-  render();
-
-  const ignored = result.ignored ? `, ${result.ignored} not recognised` : "";
-  say(`Applied ${result.applied} settings${ignored}.`);
+  if (applyImported(data)) closePaste();
 });
 
 document.getElementById("reset").addEventListener("click", () => {

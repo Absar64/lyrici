@@ -24,9 +24,18 @@
       </p>
       <div class="panel__actions">
         <button class="btn" type="button" id="export">Export settings</button>
-        <button class="btn" type="button" id="import">Import settings…</button>
+        <button class="btn" type="button" id="import">Import file…</button>
+        <button class="btn" type="button" id="paste-open">Paste JSON</button>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
+
+      <div id="paste-box" hidden>
+        <textarea class="paste" id="paste-text" placeholder="Paste exported JSON here" spellcheck="false"></textarea>
+        <div class="panel__actions">
+          <button class="btn" type="button" id="paste-apply">Apply</button>
+          <button class="btn" type="button" id="paste-cancel">Cancel</button>
+        </div>
+      </div>
 
       <div class="panel__actions">
         <button class="btn" type="button" id="reset">Reset to defaults</button>

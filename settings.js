@@ -57,6 +57,10 @@ export const DEFAULTS = {
   // lyric effects (built per song in the effects builder)
   effectsEnabled: true,
   effectDensity: 1,
+
+  // "auto" follows the device's reduce-motion setting, which iOS turns on
+  // under Accessibility and in some battery modes. "full" ignores it.
+  motion: "auto",
 };
 
 export const FONTS = [
@@ -133,6 +137,11 @@ export function apply(s, root = document.documentElement) {
   };
 
   for (const [name, on] of Object.entries(flags)) root.dataset[name] = on ? "on" : "off";
+
+  const prefersReduced =
+    typeof matchMedia === "function" && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const reduced = s.motion === "reduced" || (s.motion === "auto" && prefersReduced);
+  root.dataset.motion = reduced ? "reduced" : "full";
 }
 
 /* ================= backup ================= */

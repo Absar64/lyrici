@@ -70,7 +70,9 @@ an already-open lyrics tab without a reload.
 The **Backup** section exports your settings as a JSON file and loads them back
 again, which is how you carry the same look to another browser or machine.
 Import accepts a settings file or a full effects backup from the builder, since
-"Export all" there carries the settings too. Only keys this version knows about
+"Export all" there carries the settings too. **Paste JSON** takes the same
+content pasted straight in, which is the easier route on a phone where saving
+and picking files is awkward; the effects builder has the same button. Only keys this version knows about
 are applied, and only when the value is the right shape, so a stale or edited
 file cannot leave the app in a strange state; anything else is reported as not
 recognised.
@@ -154,6 +156,28 @@ gradient sprite at that size.
 If effects still feel heavy on a slow machine, the cheapest wins are lowering
 **Particle amount** in Settings, dropping **Inactive blur** to 0, and turning
 off the album **ambience** blur.
+
+### On phones
+
+The app is built to behave the same on a phone as on a laptop, with a few
+things worth knowing:
+
+- **Motion.** iOS turns on Reduce Motion under Accessibility, and the app used
+  to honour it by switching animation off altogether: lyrics jumped between
+  lines instead of gliding and text effects did not play at all. Reduced motion
+  now simply shortens the long movements and drops the full-screen shake, and
+  **Settings -> Effects -> Motion** can force full motion whatever the device
+  says.
+- **Effects stay on their word.** The particle canvas measures its own box
+  rather than the window. The two differ on iOS as the browser toolbars grow
+  and shrink, and the canvas sets its own layout so a slow stylesheet cannot
+  leave it mis-sized on a cold load. Both were enough to send a burst out of
+  the wrong word.
+- **No dragging on touch.** iOS fires no HTML5 drag events, so in the builder
+  you tap a word and then tap an effect; tap a second word with the first still
+  selected to cover a phrase. The hint in the palette says so on touch devices.
+- Heights use `dvh`, so the footer is not left under the browser chrome, and
+  controls are sized to avoid iOS zooming the page when you focus a field.
 
 ### How a word gets its moment
 

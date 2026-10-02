@@ -482,17 +482,13 @@ function exportEverything() {
   download(`lyric-effects-all-${datestamp()}.json`, bundle);
 }
 
-async function importFromFile(file) {
-  const data = await readJson(file);
-  if (!data) {
-    alert("That file could not be read as JSON.");
-    return;
-  }
-
+// One path for both ways in: a picked file and pasted text differ only in how
+// the JSON is obtained.
+async function importData(data) {
   const summary = inspectBundle(data);
   if (!summary.ok) {
     alert(summary.reason);
-    return;
+    return false;
   }
 
   const lines = [
@@ -520,6 +516,16 @@ async function importFromFile(file) {
     await loadTrack(current.track);
   }
   describeLibrary();
+  return true;
+}
+
+async function importFromFile(file) {
+  const data = await readJson(file);
+  if (!data) {
+    alert("That file could not be read as JSON.");
+    return;
+  }
+  await importData(data);
 }
 
 /* ================= wiring ================= */
@@ -540,6 +546,36 @@ el.rehearse.addEventListener("click", toggleRehearsal);
 el.exportSong.addEventListener("click", exportThisSong);
 el.exportAll.addEventListener("click", exportEverything);
 el.importButton.addEventListener("click", () => el.importFile.click());
+
+const pasteBox = document.getElementById("paste-box");
+const pasteText = document.getElementById("paste-text");
+
+function closePaste() {
+  pasteBox.hidden = true;
+  pasteText.value = "";
+}
+
+document.getElementById("paste-open").addEventListener("click", () => {
+  pasteBox.hidden = !pasteBox.hidden;
+  if (!pasteBox.hidden) pasteText.focus();
+});
+
+document.getElementById("paste-cancel").addEventListener("click", closePaste);
+
+document.getElementById("paste-apply").addEventListener("click", async () => {
+  const text = pasteText.value.trim();
+  if (!text) return;
+
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    alert("That is not valid JSON.");
+    return;
+  }
+
+  if (await importData(data)) closePaste();
+});
 el.importFile.addEventListener("change", async () => {
   const [file] = el.importFile.files;
   if (file) await importFromFile(file);
@@ -553,6 +589,13 @@ el.score.addEventListener("click", (event) => {
     renderScore();
   }
 });
+
+// iOS and Android fire no HTML5 drag events, so on touch the flow is
+// tap a word, then tap an effect. The palette already works that way.
+if (typeof matchMedia === "function" && matchMedia("(hover: none)").matches) {
+  const hint = document.querySelector(".rail__hint");
+  if (hint) hint.textContent = "Tap a word to select it, then tap an effect. Tap a second word with the first still selected to cover a phrase.";
+}
 
 (async () => {
   buildPalette();

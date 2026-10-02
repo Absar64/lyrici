@@ -257,10 +257,13 @@ const GLYPHS = {
 const CONFETTI_COLORS = ["#ff5f8f", "#ffd166", "#6ee7b7", "#7dd3fc", "#c4b5fd", "#fb923c"];
 const FIREWORK_COLORS = ["#ffd166", "#ff5f8f", "#7dd3fc", "#ffffff", "#c4b5fd", "#6ee7b7"];
 
-// Where a burst begins, in viewport pixels.
-function originPoint(origin, rect) {
-  const w = innerWidth;
-  const h = innerHeight;
+// Where a burst begins, in the canvas's own coordinates. `view` is the canvas
+// box and `rect` the word's position already translated into it — never the
+// window, whose size differs from the canvas on iOS, where the dynamic
+// toolbars make innerHeight and the fixed-position box disagree.
+function originPoint(origin, rect, view) {
+  const w = view.width;
+  const h = view.height;
   switch (origin) {
     case "bottom": return { x: rand(0, w), y: h + 40, scatter: true };
     case "top": return { x: rand(0, w), y: -40, scatter: true };
@@ -272,12 +275,12 @@ function originPoint(origin, rect) {
 }
 
 // Each effect gets its own motion. Velocities are px/s, accelerations px/s².
-function spawn(effect, params, rect) {
+function spawn(effect, params, rect, view) {
   const count = Math.max(1, Math.round(params.count));
   const particles = [];
 
   for (let i = 0; i < count; i += 1) {
-    const point = originPoint(params.origin, rect);
+    const point = originPoint(params.origin, rect, view);
     const base = {
       x: point.x + (point.scatter ? 0 : rand(-26, 26)),
       y: point.y + (point.scatter ? 0 : rand(-14, 14)),
@@ -420,13 +423,54 @@ export function createEngine({ behind, front, stage = document.body, density = 1
   let frameCost = 16;
   let quality = 1;
 
+  // The canvas's own box, in CSS pixels. Everything is drawn and culled in
+  // these coordinates.
+  let view = { left: 0, top: 0, width: 0, height: 0 };
+
+  // The layout the canvases need is set here rather than relying on the
+  // stylesheet having arrived. On a cold load the module can run before the CSS
+  // applies, and measuring then returns the canvas's default 300x150, which was
+  // written back into the backing store and left every burst scaled and
+  // offset from its word.
+  for (const canvas of Object.values(canvases)) {
+    canvas.style.position = "fixed";
+    canvas.style.left = "0";
+    canvas.style.top = "0";
+    canvas.style.width = "100%";
+    canvas.style.height = "100%";
+    canvas.style.pointerEvents = "none";
+  }
+
   function resize() {
     ratio = Math.min(devicePixelRatio || 1, 2);
+
+    // Measured from the element, not from window.innerWidth/innerHeight. On
+    // iOS those differ from a fixed-position box as the toolbars grow and
+    // shrink, and a backing store sized to the window would stretch across a
+    // box of another size, putting every particle somewhere other than the
+    // word it belongs to.
+    const rect = behind.getBoundingClientRect();
+    const sane = rect.width > 1 && rect.height > 1;
+    view = sane
+      ? { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+      : { left: 0, top: 0, width: innerWidth, height: innerHeight };
+
     for (const [name, canvas] of Object.entries(canvases)) {
-      canvas.width = innerWidth * ratio;
-      canvas.height = innerHeight * ratio;
+      canvas.width = Math.max(1, Math.round(view.width * ratio));
+      canvas.height = Math.max(1, Math.round(view.height * ratio));
       contexts[name].setTransform(ratio, 0, 0, ratio, 0, 0);
     }
+  }
+
+  /** A viewport rect (what getBoundingClientRect returns) in canvas coordinates. */
+  function toCanvasSpace(rect) {
+    if (!rect) return null;
+    return {
+      left: rect.left - view.left,
+      top: rect.top - view.top,
+      width: rect.width,
+      height: rect.height,
+    };
   }
 
   /* ---------- drawing ----------
@@ -549,7 +593,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
       // already cleared last frame is left alone.
       if (pool.length || painted[name]) {
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
-        ctx.clearRect(0, 0, innerWidth, innerHeight);
+        ctx.clearRect(0, 0, view.width, view.height);
       }
       painted[name] = pool.length > 0;
       if (pool.length) beginLayer(ctx);
@@ -569,7 +613,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
 
         // Give particles a generous margin before culling, so slow risers
         // are not killed the moment they leave the top edge.
-        if (p.y < -200 || p.y > innerHeight + 200 || p.x < -200 || p.x > innerWidth + 200) continue;
+        if (p.y < -200 || p.y > view.height + 200 || p.x < -200 || p.x > view.width + 200) continue;
 
         draw(ctx, p);
         next.push(p);
@@ -600,7 +644,10 @@ export function createEngine({ behind, front, stage = document.body, density = 1
   const MAX_PARTICLES = 650;
 
   function runBurst(effect, params, element) {
-    const rect = element?.getBoundingClientRect() ?? null;
+    // Re-measure first: on iOS the box moves as the toolbars appear, and a
+    // stale box would anchor the burst to the wrong place on screen.
+    if (!view.width || !view.height) resize();
+    const rect = toCanvasSpace(element?.getBoundingClientRect() ?? null);
     const layer = params.layer === "front" ? "front" : "behind";
     const pool = pools[layer];
 
@@ -608,7 +655,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
     const room = MAX_PARTICLES - (pools.behind.length + pools.front.length);
     const count = Math.min(wanted, Math.max(1, room));
 
-    pool.push(...spawn(effect, { ...params, count }, rect));
+    pool.push(...spawn(effect, { ...params, count }, rect, view));
 
     // If the cap is still exceeded, the oldest particles make way: they are
     // the ones already fading out, so dropping them is the least visible.
@@ -649,6 +696,10 @@ export function createEngine({ behind, front, stage = document.body, density = 1
   }
 
   addEventListener("resize", resize);
+  addEventListener("orientationchange", resize);
+  // iOS reports toolbar growth and pinch-zoom here rather than through resize.
+  visualViewport?.addEventListener("resize", resize);
+  visualViewport?.addEventListener("scroll", resize);
   resize();
 
   return {
@@ -669,7 +720,7 @@ export function createEngine({ behind, front, stage = document.body, density = 1
       for (const name of ["behind", "front"]) {
         // draw() leaves an arbitrary transform behind, so reset before clearing.
         contexts[name].setTransform(ratio, 0, 0, ratio, 0, 0);
-        contexts[name].clearRect(0, 0, innerWidth, innerHeight);
+        contexts[name].clearRect(0, 0, view.width, view.height);
         painted[name] = false;
       }
     },

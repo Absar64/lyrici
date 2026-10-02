@@ -229,6 +229,7 @@ body.fx-screenshake { animation: fx-screenshake 0.55s cubic-bezier(0.36, 0.07, 0
   88% { transform: translate(2px, -1px); }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .word[class*="fx-"], body.fx-screenshake { animation: none; }
-}
+/* Word effects are small and local, so they still play under reduced motion.
+   Only the full-screen shake is dropped, which is the part that actually
+   troubles motion sensitivity. */
+[data-motion="reduced"] body.fx-screenshake { animation: none; }

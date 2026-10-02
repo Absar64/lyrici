@@ -62,9 +62,18 @@
         <button class="mini" id="export-all" type="button">Export all</button>
       </div>
       <div class="card__row">
-        <button class="mini" id="import" type="button">Import a file…</button>
+        <button class="mini" id="import" type="button">Import file…</button>
+        <button class="mini" id="paste-open" type="button">Paste JSON</button>
       </div>
       <input type="file" id="import-file" accept="application/json,.json" hidden />
+
+      <div id="paste-box" hidden>
+        <textarea class="paste" id="paste-text" placeholder="Paste exported JSON here" spellcheck="false"></textarea>
+        <div class="card__row">
+          <button class="mini" id="paste-apply" type="button">Apply</button>
+          <button class="mini" id="paste-cancel" type="button">Cancel</button>
+        </div>
+      </div>
     </aside>
   </div>
 
