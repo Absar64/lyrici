@@ -1,6 +1,17 @@
 // Builds the settings form from a schema and keeps the preview in step.
-import { DEFAULTS, FONTS, apply, load, reset, save } from "./settings.js";
+import {
+  DEFAULTS,
+  FONTS,
+  apply,
+  exportSettings,
+  importSettings,
+  inspectSettings,
+  load,
+  reset,
+  save,
+} from "./settings.js";
 import { createField } from "./ui-controls.js";
+import { datestamp, download, readJson } from "./backup-file.js";
 
 // Each entry: [key, label, kind, options]
 //   range  -> { min, max, step, unit }
@@ -166,11 +177,57 @@ function update(key, value) {
   render();
 }
 
+/* ---------- backup ---------- */
+
+const note = document.getElementById("backup-note");
+
+function say(message) {
+  note.textContent = message;
+}
+
+document.getElementById("export").addEventListener("click", () => {
+  download(`lyrics-settings-${datestamp()}.json`, exportSettings());
+  say("Settings exported.");
+});
+
+const picker = document.getElementById("import-file");
+document.getElementById("import").addEventListener("click", () => picker.click());
+
+picker.addEventListener("change", async () => {
+  const [file] = picker.files;
+  picker.value = ""; // so the same file can be picked twice
+  if (!file) return;
+
+  const data = await readJson(file);
+  if (!data) {
+    say("That file could not be read as JSON.");
+    return;
+  }
+
+  const summary = inspectSettings(data);
+  if (!summary.ok) {
+    say(summary.reason);
+    return;
+  }
+
+  const source = summary.fromBackup ? " from a full backup" : "";
+  if (!confirm(`Apply ${summary.count} settings${source}? This replaces how the app currently looks.`)) return;
+
+  const result = importSettings(data);
+  settings = result.settings;
+  buildForm();
+  render();
+
+  const ignored = result.ignored ? `, ${result.ignored} not recognised` : "";
+  say(`Applied ${result.applied} settings${ignored}.`);
+});
+
 document.getElementById("reset").addEventListener("click", () => {
   reset();
   settings = { ...DEFAULTS };
   buildForm();
   render();
+  say("Back to defaults.");
 });
 
 addEventListener("resize", focusPreview);

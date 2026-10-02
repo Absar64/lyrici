@@ -67,6 +67,14 @@ an already-open lyrics tab without a reload.
 
 **Reset to defaults** at the bottom of the panel puts everything back.
 
+The **Backup** section exports your settings as a JSON file and loads them back
+again, which is how you carry the same look to another browser or machine.
+Import accepts a settings file or a full effects backup from the builder, since
+"Export all" there carries the settings too. Only keys this version knows about
+are applied, and only when the value is the right shape, so a stale or edited
+file cannot leave the app in a strange state; anything else is reported as not
+recognised.
+
 Settings are stored in `localStorage` per browser. Defaults live in one place —
 `DEFAULTS` in [settings.js](settings.js) — and the stylesheet's `:root` mirrors
 them so the first paint is correct before JavaScript runs. To add an option, add

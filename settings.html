@@ -18,6 +18,16 @@
       </div>
       <!-- fields are built from the schema in settings-ui.js -->
       <div id="fields"></div>
+      <div class="group__name">Backup</div>
+      <p class="rail__hint" id="backup-note">
+        Save how everything looks, or load it back on another browser.
+      </p>
+      <div class="panel__actions">
+        <button class="btn" type="button" id="export">Export settings</button>
+        <button class="btn" type="button" id="import">Import settings…</button>
+      </div>
+      <input type="file" id="import-file" accept="application/json,.json" hidden />
+
       <div class="panel__actions">
         <button class="btn" type="button" id="reset">Reset to defaults</button>
       </div>

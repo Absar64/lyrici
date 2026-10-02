@@ -15,6 +15,7 @@ import { buildCues, formatTime, splitWords, wordTimeMs } from "./cues.js";
 import { fetchLyrics } from "./lyrics.js";
 import { currentlyPlaying } from "./spotify.js";
 import { createField } from "./ui-controls.js";
+import { datestamp, download, readJson } from "./backup-file.js";
 import { apply as applySettings, load as loadSettings, save as saveSettings } from "./settings.js";
 
 const el = {
@@ -457,18 +458,6 @@ function slug(text) {
     .slice(0, 50);
 }
 
-// Hands the file straight to the browser's download: the data never leaves
-// this machine.
-function download(filename, payload) {
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
-}
-
 function describeLibrary() {
   const songs = savedSongs();
   const effects = songs.reduce((total, song) => total + song.assignments.length, 0);
@@ -490,14 +479,12 @@ function exportEverything() {
   // The full backup carries the look of the app too, so a restore puts
   // everything back, not just the effects.
   bundle.settings = loadSettings();
-  download(`lyric-effects-all-${new Date().toISOString().slice(0, 10)}.json`, bundle);
+  download(`lyric-effects-all-${datestamp()}.json`, bundle);
 }
 
 async function importFromFile(file) {
-  let data;
-  try {
-    data = JSON.parse(await file.text());
-  } catch {
+  const data = await readJson(file);
+  if (!data) {
     alert("That file could not be read as JSON.");
     return;
   }

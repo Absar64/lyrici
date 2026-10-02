@@ -135,6 +135,77 @@ export function apply(s, root = document.documentElement) {
   for (const [name, on] of Object.entries(flags)) root.dataset[name] = on ? "on" : "off";
 }
 
+/* ================= backup ================= */
+
+export const SETTINGS_KIND = "spotify-lyrics-settings";
+const SETTINGS_VERSION = 1;
+
+export function exportSettings() {
+  return {
+    kind: SETTINGS_KIND,
+    version: SETTINGS_VERSION,
+    exportedAt: new Date().toISOString(),
+    settings: load(),
+  };
+}
+
+// A file is data from outside the app, so only keys this version knows about
+// are taken, and only when the value is the right shape for that key. Anything
+// else is counted as ignored rather than written into settings.
+function sanitize(raw) {
+  const clean = {};
+  const ignored = [];
+
+  for (const [key, value] of Object.entries(raw ?? {})) {
+    const expected = DEFAULTS[key];
+    if (expected === undefined) {
+      ignored.push(key);
+      continue;
+    }
+    const sameType = typeof value === typeof expected;
+    const usable = sameType && (typeof value !== "number" || Number.isFinite(value));
+    if (usable) clean[key] = value;
+    else ignored.push(key);
+  }
+
+  return { clean, ignored };
+}
+
+/** Pull the settings out of a settings file, or out of a full effects backup. */
+function settingsIn(data) {
+  if (!data || typeof data !== "object") return null;
+  if (data.kind === SETTINGS_KIND && data.settings) return data.settings;
+  // "Export all" from the effects builder carries settings alongside the songs.
+  if (data.settings && typeof data.settings === "object") return data.settings;
+  return null;
+}
+
+/** What a file holds, for the confirmation shown before importing. */
+export function inspectSettings(data) {
+  const incoming = settingsIn(data);
+  if (!incoming) return { ok: false, reason: "This file does not contain any settings." };
+
+  const { clean, ignored } = sanitize(incoming);
+  const count = Object.keys(clean).length;
+  if (!count) return { ok: false, reason: "No settings in this file could be read." };
+
+  return { ok: true, count, ignored: ignored.length, fromBackup: data.kind !== SETTINGS_KIND };
+}
+
+/** Merge a file's settings over the current ones and save. */
+export function importSettings(data) {
+  const incoming = settingsIn(data);
+  if (!incoming) return { applied: 0, ignored: 0 };
+
+  const { clean, ignored } = sanitize(incoming);
+  // Merged over the defaults, so a file written by an older version still
+  // produces a complete, usable set.
+  const merged = { ...DEFAULTS, ...load(), ...clean };
+  save(merged);
+
+  return { applied: Object.keys(clean).length, ignored: ignored.length, settings: merged };
+}
+
 // Fires when settings are saved in another tab, so an open lyrics view keeps up
 // with the settings page without a reload.
 export function onChange(handler) {
