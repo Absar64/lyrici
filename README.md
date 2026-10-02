@@ -148,7 +148,19 @@ below are per 1500 glyph draws in Chrome:
   there is headroom again. Settings has a particle-amount multiplier if you
   would rather set it yourself.
 
-Pre-rendered sprites were tried and were *slower* than drawing the glyphs
+Text effects animate only `transform` and `opacity`, the two properties a
+compositor can handle without redoing layout or paint:
+
+- A glow is painted by a pseudo-element holding a copy of the word with the
+  shadow on it permanently, and only that copy's opacity animates. Animating
+  `text-shadow` itself repainted the text every frame, which is what made the
+  glowing effects crawl on phones.
+- `letter-spacing` is no longer animated, since changing it reflows the line on
+  every frame.
+- The screen shake moves the content layer rather than `<body>`, so the
+  full-screen blurred artwork is not re-composited while it runs.
+
+Pre-rendered sprites were tried for particles and were *slower* than drawing glyphs
 directly, so they are deliberately not used. The same applies to the glow on
 fireworks: `shadowBlur` measured roughly five times faster than blitting a
 gradient sprite at that size.

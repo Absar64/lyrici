@@ -14,15 +14,46 @@
 [data-effects="off"] .fx { display: none; }
 
 .word {
+  position: relative;
   display: inline-block;
   transform-origin: center bottom;
+}
+
+/* ---------- glow twin ----------
+   A blurred text-shadow is the most expensive thing to paint, and animating
+   one repaints the text every frame — which is what made these effects crawl
+   on phones. Instead the word is painted over itself by a pseudo-element that
+   carries the shadow permanently, and only that copy's opacity animates.
+   Opacity is a compositor property, so the glow fades in and out without a
+   single repaint, and the result on screen is the same bloom.
+
+   It uses ::before, not ::after: the builder already puts the effect's name on
+   a word with ::after, and an element has only one of each, so a twin there
+   would have rendered the label instead of the word. z-index keeps it painted
+   over the word rather than behind it. */
+.word.fx-emphasis::before,
+.word.fx-glow::before,
+.word.fx-spotlight::before,
+.word.fx-neon::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  opacity: 0;
+  pointer-events: none;
+  color: inherit;
+  z-index: 1;
 }
 
 /* Only hint the compositor for words that are actually animating. Setting
    will-change on every word asks the browser to prepare a layer for each of
    several hundred spans, which costs memory and paint time for no gain. */
+/* Only the properties the compositor can actually handle are hinted here.
+   Listing `color` asked the browser to prepare for repaints it cannot
+   accelerate, which worked against the point of the hint. */
 .word[class*="fx-"] {
-  will-change: transform, color;
+  will-change: transform, opacity;
 }
 
 /* ---------- spotlight: the stage dims, one word keeps its light ----------
@@ -42,10 +73,22 @@
 }
 
 @keyframes fx-spotlight {
-  0% { transform: scale(1); text-shadow: 0 0 0 transparent; }
-  18% { transform: scale(var(--fx-scale, 1.12)); text-shadow: 0 0 36px rgba(255, 255, 255, 0.55); }
-  82% { transform: scale(var(--fx-scale, 1.12)); text-shadow: 0 0 36px rgba(255, 255, 255, 0.55); }
-  100% { transform: scale(1); text-shadow: 0 0 0 transparent; }
+  0% { transform: scale(1); }
+  18% { transform: scale(var(--fx-scale, 1.12)); }
+  82% { transform: scale(var(--fx-scale, 1.12)); }
+  100% { transform: scale(1); }
+}
+
+.word.fx-spotlight::before {
+  text-shadow: 0 0 36px rgba(255, 255, 255, 0.55);
+  animation: fx-twin-spotlight var(--fx-duration, 1600ms) ease both;
+}
+
+@keyframes fx-twin-spotlight {
+  0% { opacity: 0; }
+  18% { opacity: 1; }
+  82% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ---------- slam ---------- */
@@ -70,11 +113,25 @@
   animation: fx-emphasis var(--fx-duration, 900ms) cubic-bezier(0.3, 1.4, 0.4, 1) both;
 }
 
+/* letter-spacing is deliberately not animated here: it is a layout property,
+   so every frame reflowed the whole line. The scale carries the swell. */
 @keyframes fx-emphasis {
   0% { transform: scale(1); }
-  30% { transform: scale(var(--fx-scale, 1.7)); letter-spacing: 0.04em; text-shadow: 0 0 30px rgba(255, 255, 255, 0.5); }
+  30% { transform: scale(var(--fx-scale, 1.7)); }
   60% { transform: scale(calc(var(--fx-scale, 1.7) * 0.94)); }
-  100% { transform: scale(1); text-shadow: none; }
+  100% { transform: scale(1); }
+}
+
+.word.fx-emphasis::before {
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.55);
+  animation: fx-twin-emphasis var(--fx-duration, 900ms) ease both;
+}
+
+@keyframes fx-twin-emphasis {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  70% { opacity: 0.5; }
+  100% { opacity: 0; }
 }
 
 /* ---------- shake ---------- */
@@ -99,13 +156,23 @@
 .word.fx-glow { animation: fx-glow var(--fx-duration, 1400ms) ease-in-out both; }
 
 @keyframes fx-glow {
-  0% { transform: scale(1); text-shadow: none; }
-  35% {
-    transform: scale(var(--fx-scale, 1.1));
-    color: var(--fx-color, #ffd9a0);
-    text-shadow: 0 0 10px var(--fx-color, #ffd9a0), 0 0 42px var(--fx-color, #ffd9a0), 0 0 80px var(--fx-color, #ffd9a0);
-  }
-  100% { transform: scale(1); text-shadow: none; }
+  0% { transform: scale(1); }
+  35% { transform: scale(var(--fx-scale, 1.1)); }
+  100% { transform: scale(1); }
+}
+
+/* The twin carries both the colour and the bloom, so fading it in produces the
+   same warm flare the colour-and-shadow animation used to. */
+.word.fx-glow::before {
+  color: var(--fx-color, #ffd9a0);
+  text-shadow: 0 0 10px var(--fx-color, #ffd9a0), 0 0 42px var(--fx-color, #ffd9a0), 0 0 80px var(--fx-color, #ffd9a0);
+  animation: fx-twin-glow var(--fx-duration, 1400ms) ease-in-out both;
+}
+
+@keyframes fx-twin-glow {
+  0% { opacity: 0; }
+  35% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ---------- colour flash ---------- */
@@ -163,14 +230,23 @@
 .word.fx-neon { animation: fx-neon var(--fx-duration, 1600ms) linear both; }
 
 @keyframes fx-neon {
-  0%, 18%, 24%, 44% { color: inherit; text-shadow: none; }
-  20%, 30%, 50%, 100% {
-    color: var(--fx-color, #8be9fd);
-    transform: scale(var(--fx-scale, 1.08));
-    text-shadow: 0 0 6px var(--fx-color, #8be9fd), 0 0 22px var(--fx-color, #8be9fd), 0 0 48px var(--fx-color, #8be9fd);
-  }
-  27% { color: inherit; text-shadow: none; }
-  47% { color: inherit; text-shadow: none; }
+  0%, 18%, 24%, 44% { transform: scale(1); }
+  20%, 30%, 50%, 100% { transform: scale(var(--fx-scale, 1.08)); }
+  27%, 47% { transform: scale(1); }
+}
+
+/* The stutter is the twin blinking on and off, rather than the colour and
+   three shadows being repainted at each step. */
+.word.fx-neon::before {
+  color: var(--fx-color, #8be9fd);
+  text-shadow: 0 0 6px var(--fx-color, #8be9fd), 0 0 22px var(--fx-color, #8be9fd), 0 0 48px var(--fx-color, #8be9fd);
+  animation: fx-twin-neon var(--fx-duration, 1600ms) linear both;
+}
+
+@keyframes fx-twin-neon {
+  0%, 18%, 24%, 44% { opacity: 0; }
+  20%, 30%, 50%, 100% { opacity: 1; }
+  27%, 47% { opacity: 0; }
 }
 
 /* ---------- rainbow sweep ---------- */
@@ -217,7 +293,14 @@
 
 /* ---------- screen shake, shared by any effect that asks for it ---------- */
 
-body.fx-screenshake { animation: fx-screenshake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+/* The shake moves the content layer, not <body>. Shaking the document meant
+   the full-screen blurred artwork behind it was re-composited every frame,
+   which is the most expensive thing on the page; the wash is far too soft for
+   its movement to be visible anyway, so the result looks the same. */
+body.fx-screenshake .shell,
+body.fx-screenshake .builder {
+  animation: fx-screenshake 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
 
 @keyframes fx-screenshake {
   0%, 100% { transform: translate(0, 0); }

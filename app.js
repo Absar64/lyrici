@@ -113,6 +113,8 @@ function renderSynced(lines) {
       const span = document.createElement("span");
       span.className = "word";
       span.textContent = word;
+      // Read back by the glow twin in effects.css via content: attr(data-text).
+      span.dataset.text = word;
       return span;
     });
 

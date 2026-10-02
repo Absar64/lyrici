@@ -202,6 +202,8 @@ function renderScore() {
       span.dataset.line = lineIndex;
       span.dataset.word = wordIndex;
       span.textContent = text;
+      // Read back by the glow twin in effects.css via content: attr(data-text).
+      span.dataset.text = text;
 
       const here = assignmentsAt(lineIndex, wordIndex);
       if (here.length) {
