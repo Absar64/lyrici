@@ -168,6 +168,14 @@ things worth knowing:
   now simply shortens the long movements and drops the full-screen shake, and
   **Settings -> Effects -> Motion** can force full motion whatever the device
   says.
+- **Emoji render as bitmaps.** Apple Color Emoji are bitmap (sbix) glyphs, and
+  WebKit often refuses to draw them through a scaled canvas transform, which
+  silently dropped every emoji effect on iOS while the shape-drawn ones and the
+  plain symbols kept working. Each glyph is now rasterised once into an
+  offscreen canvas and blitted, which renders everywhere.
+- **Bursts scale with the screen.** Sizes and speeds are authored for a roughly
+  800px screen and scaled between half and double that, so an effect covers the
+  same share of a phone as of a large monitor.
 - **Effects stay on their word.** The particle canvas measures its own box
   rather than the window. The two differ on iOS as the browser toolbars grow
   and shrink, and the canvas sets its own layout so a slow stylesheet cannot

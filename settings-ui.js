@@ -45,7 +45,7 @@ const SCHEMA = [
     ["inactiveBlur", "Inactive blur", "range", { min: 0, max: 6, step: 0.1, unit: "px" }],
     ["fadeEdges", "Fade top & bottom", "toggle"],
     ["scrollSpeed", "Scroll speed", "range", { min: 0, max: 2000, step: 25, unit: "ms" }],
-    ["leadMs", "Timing offset", "range", { min: -600, max: 1000, step: 10, unit: "ms" }],
+    ["leadMs", "Timing offset (− delays)", "range", { min: -2000, max: 2000, step: 10, unit: "ms" }],
   ]],
 
   ["Background", [

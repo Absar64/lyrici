@@ -274,23 +274,35 @@ function originPoint(origin, rect, view) {
   }
 }
 
+/**
+ * Sizes and speeds are authored against a roughly 800px screen. On anything
+ * much smaller or larger they are scaled to match, so a burst covers the same
+ * share of a phone, a laptop and a wall-sized display rather than swamping one
+ * and vanishing on the other.
+ */
+function viewScale(view) {
+  const shortest = Math.min(view.width || 800, view.height || 800);
+  return Math.max(0.5, Math.min(2, shortest / 800));
+}
+
 // Each effect gets its own motion. Velocities are px/s, accelerations px/s².
 function spawn(effect, params, rect, view) {
   const count = Math.max(1, Math.round(params.count));
+  const vs = viewScale(view);
   const particles = [];
 
   for (let i = 0; i < count; i += 1) {
     const point = originPoint(params.origin, rect, view);
     const base = {
-      x: point.x + (point.scatter ? 0 : rand(-26, 26)),
-      y: point.y + (point.scatter ? 0 : rand(-14, 14)),
-      size: params.size * rand(0.7, 1.3),
+      x: point.x + (point.scatter ? 0 : rand(-26, 26) * vs),
+      y: point.y + (point.scatter ? 0 : rand(-14, 14) * vs),
+      size: params.size * rand(0.7, 1.3) * vs,
       rot: rand(-0.4, 0.4),
       vr: rand(-1.6, 1.6),
       age: 0,
       shrink: false,
       life: (params.life / 1000) * rand(0.8, 1.15),
-      swayAmp: rand(8, 26) * params.sway,
+      swayAmp: rand(8, 26) * params.sway * vs,
       swayRate: rand(0.9, 2.1),
       swayPhase: rand(0, Math.PI * 2),
       drag: 1,
@@ -397,6 +409,13 @@ function spawn(effect, params, rect, view) {
       }
     }
 
+    // Scale the motion too, so a trajectory keeps its shape at any screen
+    // size instead of a burst crossing a phone in a blink.
+    base.vx *= vs;
+    base.vy *= vs;
+    base.ax *= vs;
+    base.ay *= vs;
+
     particles.push(base);
   }
 
@@ -483,8 +502,39 @@ export function createEngine({ behind, front, stage = document.body, density = 1
      Pre-rendered sprites were tried and were slower still, so they are not
      used: a scaled drawImage costs more than the text call it replaced. */
 
-  const GLYPH_EM = 64; // every glyph is drawn at this size, then scaled by the matrix
-  const GLYPH_FONT = `${GLYPH_EM}px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", serif`;
+  /* Glyphs are rasterised once into an offscreen canvas and then blitted.
+     This is not for speed — fillText measured faster on desktop — but for
+     correctness on iOS: Apple Color Emoji are bitmap (sbix) glyphs, and
+     WebKit frequently refuses to draw them through a scaled canvas transform,
+     which silently dropped every emoji effect while the shape-drawn ones and
+     the plain text symbols kept working. Rasterising once at a natural size,
+     with no transform in play, then scaling the bitmap, renders everywhere. */
+
+  const GLYPH_EM = 144;
+  const GLYPH_BOX = 192; // padding, since emoji often overflow their em box
+  const GLYPH_RATIO = GLYPH_BOX / GLYPH_EM;
+  const GLYPH_FONT = `${GLYPH_EM}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+
+  const glyphSprites = new Map();
+
+  function glyphSprite(glyph) {
+    let sprite = glyphSprites.get(glyph);
+    if (sprite) return sprite;
+
+    sprite = document.createElement("canvas");
+    sprite.width = GLYPH_BOX;
+    sprite.height = GLYPH_BOX;
+
+    const sctx = sprite.getContext("2d");
+    sctx.font = GLYPH_FONT;
+    sctx.textAlign = "center";
+    sctx.textBaseline = "middle";
+    sctx.fillStyle = "#fff"; // colour emoji ignore this; symbol glyphs use it
+    sctx.fillText(glyph, GLYPH_BOX / 2, GLYPH_BOX / 2);
+
+    glyphSprites.set(glyph, sprite);
+    return sprite;
+  }
 
   // Canvas state mirrored in JS, so it is only written when it actually changes.
   let lastFill = "";
@@ -508,9 +558,8 @@ export function createEngine({ behind, front, stage = document.body, density = 1
   }
 
   function beginLayer(ctx) {
-    ctx.font = GLYPH_FONT;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+    // No text is drawn during a frame any more — glyphs arrive as bitmaps —
+    // so there is no font state to set up here.
     lastFill = "";
     lastShadow = "";
     shadowOn = false;
@@ -530,16 +579,14 @@ export function createEngine({ behind, front, stage = document.body, density = 1
     const sin = Math.sin(p.rot);
     ctx.globalAlpha = alpha;
 
+    ctx.setTransform(ratio * cos, ratio * sin, -ratio * sin, ratio * cos, ratio * p.x, ratio * p.y);
+
     if (p.kind === "glyph") {
-      const k = (ratio * size) / GLYPH_EM;
-      ctx.setTransform(k * cos, k * sin, -k * sin, k * cos, ratio * p.x, ratio * p.y);
       clearShadow(ctx);
-      setFill(ctx, p.color ?? "#fff");
-      ctx.fillText(p.glyph, 0, 0);
+      const box = size * GLYPH_RATIO;
+      ctx.drawImage(glyphSprite(p.glyph), -box / 2, -box / 2, box, box);
       return;
     }
-
-    ctx.setTransform(ratio * cos, ratio * sin, -ratio * sin, ratio * cos, ratio * p.x, ratio * p.y);
 
     if (p.kind === "rect") {
       clearShadow(ctx);
