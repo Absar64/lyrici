@@ -278,12 +278,48 @@ async function loadTrack(track) {
   }
 }
 
+/* ---------- polling ----------
+   Spotify counts requests per app across a rolling window, so an idle tab left
+   open is what exhausts the budget, not actually watching lyrics. The loop
+   therefore asks only when there is something to learn: it stops while the page
+   is off screen, slows right down when playback is paused or absent, and backs
+   off hard when Spotify says to. */
+
+// Paused or nothing playing: the next thing that happens is a person pressing
+// play, and noticing that a few seconds late costs nothing.
+const IDLE_MS = 20000;
+
+let pollTimer = null;
+let pollInFlight = false;
+let pollStopped = false;
+let throttledRuns = 0;
+
+function schedulePoll(delayMs) {
+  clearTimeout(pollTimer);
+  if (pollStopped) return;
+  // A hidden page schedules nothing; visibilitychange restarts it.
+  if (document.visibilityState === "hidden") return;
+  pollTimer = setTimeout(poll, delayMs);
+}
+
+function stopPolling() {
+  pollStopped = true;
+  clearTimeout(pollTimer);
+}
+
 async function poll() {
+  if (pollStopped || pollInFlight) return;
+  if (document.visibilityState === "hidden") return;
+
+  pollInFlight = true;
   let delay = cfg.pollMs;
+
   try {
     const now = await currentlyPlaying();
+    throttledRuns = 0;
 
     if (!now) {
+      delay = Math.max(cfg.pollMs, IDLE_MS);
       setStatus("waiting for playback…");
       if (!state.trackId) {
         showNotice("Nothing playing", "Start a song in Spotify and it will appear here.");
@@ -297,6 +333,9 @@ async function poll() {
     state.positionMs = now.positionMs;
     state.sampledAt = performance.now();
 
+    // While paused the position cannot drift, so there is nothing to correct.
+    if (!now.isPlaying) delay = Math.max(cfg.pollMs, IDLE_MS);
+
     if (now.track.id !== state.trackId) {
       state.trackId = now.track.id;
       paintHeader(now.track);
@@ -306,18 +345,36 @@ async function poll() {
   } catch (err) {
     if (err.message === "session-expired" || err.message === "not-signed-in") {
       signOut();
+      stopPolling(); // nothing to poll for once the session is gone
       el.metaBar.hidden = true;
       clearLyrics();
       setStatus("");
       showNotice("Spotify Lyrics", "That session ended. Connect again to continue.", { withLogin: true });
       return;
     }
-    if (err.retryAfter) delay = err.retryAfter * 1000;
-    setStatus(err.message);
+
+    if (err.retryAfter) {
+      // Honour Retry-After, then keep doubling while it keeps happening, so a
+      // throttled app is given room to recover instead of being hammered.
+      throttledRuns += 1;
+      const backoff = Math.min(2 ** (throttledRuns - 1), 8);
+      delay = Math.max(err.retryAfter * 1000, cfg.pollMs) * backoff + Math.random() * 1000;
+      setStatus(`Spotify is rate limiting — waiting ${Math.round(delay / 1000)}s`);
+    } else {
+      setStatus(err.message);
+    }
   } finally {
-    setTimeout(poll, delay);
+    pollInFlight = false;
+    schedulePoll(delay);
   }
 }
+
+// Coming back to the page should feel immediate, but a tab flicked past does
+// not deserve a request, so a short settle keeps rapid switching cheap.
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") schedulePoll(250);
+  else clearTimeout(pollTimer);
+});
 
 /* ---------- wiring ---------- */
 
@@ -352,7 +409,7 @@ onEffectsChange(rebuildCues);
 if (isSignedIn()) {
   hideNotice();
   setStatus("connecting…");
-  poll();
+  schedulePoll(0);
 } else {
   showNotice("Spotify Lyrics", "Synced lyrics for whatever you're playing.", { withLogin: true });
 }

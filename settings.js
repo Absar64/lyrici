@@ -52,7 +52,9 @@ export const DEFAULTS = {
 
   // behaviour
   showFooter: true,
-  pollMs: 2500,
+  // Between polls the position is carried by the local clock, so asking more
+  // often than this buys accuracy nobody can perceive and spends rate limit.
+  pollMs: 5000,
 
   // lyric effects (built per song in the effects builder)
   effectsEnabled: true,

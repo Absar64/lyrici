@@ -77,7 +77,7 @@ const SCHEMA = [
 
   ["Behaviour", [
     ["showFooter", "Show status bar", "toggle"],
-    ["pollMs", "Spotify poll interval", "range", { min: 1000, max: 10000, step: 250, unit: "ms" }],
+    ["pollMs", "Spotify poll interval", "range", { min: 2000, max: 30000, step: 500, unit: "ms" }],
   ]],
 ];
 

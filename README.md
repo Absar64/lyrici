@@ -212,6 +212,23 @@ enough for an effect to hit the beat; where it doesn't, each assignment has a
 lyrics, an assignment whose stored words no longer match that position is
 skipped rather than fired against the wrong word.
 
+## Staying inside Spotify's rate limit
+
+Spotify counts requests per app over a rolling window, and an idle tab left
+open is what exhausts that budget — not actually watching lyrics. The loop
+therefore only asks when there is something to learn:
+
+| State | Requests |
+| --- | --- |
+| Page not on screen | none at all; it resumes the moment you come back |
+| Playing | one every 5s (the **Spotify poll interval** setting) |
+| Paused, or nothing playing | one every 20s |
+| Rate limited | honours `Retry-After`, then doubles while it keeps happening |
+
+Measured with a stubbed API: 720 requests/hour while actively watching, 180
+while paused, none while hidden. Before this the loop ran every 2.5s forever
+regardless of any of it, which is 1,440/hour per open tab, around the clock.
+
 ## How the sync works
 
 Spotify is polled every 2.5 s by default (adjustable in settings). Between
