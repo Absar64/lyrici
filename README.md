@@ -225,6 +225,11 @@ therefore only asks when there is something to learn:
 | Paused, or nothing playing | one every 20s |
 | Rate limited | honours `Retry-After`, then doubles while it keeps happening |
 
+A refusal of the credentials themselves is the only thing treated as the end of
+a session. Throttling and Spotify outages are retried instead: signing out on a
+429 only led to signing back in, which spent more requests and deepened the
+throttle.
+
 Measured with a stubbed API: 720 requests/hour while actively watching, 180
 while paused, none while hidden. Before this the loop ran every 2.5s forever
 regardless of any of it, which is 1,440/hour per open tab, around the clock.

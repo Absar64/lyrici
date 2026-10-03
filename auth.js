@@ -30,7 +30,20 @@ async function challengeFor(verifier) {
 
 function readTokens() {
   try {
-    return JSON.parse(localStorage.getItem(STORE)) || null;
+    const tokens = JSON.parse(localStorage.getItem(STORE));
+    if (!tokens) return null;
+
+    // Tokens belong to the app that issued them. If the client id changes,
+    // the old ones can only produce confusing failures, so drop them and ask
+    // for a fresh sign-in instead.
+    // A missing client means the tokens predate this check, so they were
+    // issued by the previous app and are no good either.
+    if (tokens.client !== CLIENT_ID) {
+      localStorage.removeItem(STORE);
+      return null;
+    }
+
+    return tokens;
   } catch {
     return null;
   }
@@ -38,6 +51,7 @@ function readTokens() {
 
 function writeTokens(payload) {
   const tokens = {
+    client: CLIENT_ID,
     access_token: payload.access_token,
     // A refresh response may omit the refresh token; keep the one we have.
     refresh_token: payload.refresh_token || readTokens()?.refresh_token,
@@ -100,7 +114,19 @@ async function refresh(refreshToken) {
       refresh_token: refreshToken,
     }),
   });
+  // Only a refusal of the credentials themselves means the session is over.
+  // Treating every failure that way signed people out whenever Spotify was
+  // throttling or briefly unwell — and signing out leads to signing back in,
+  // which costs more requests and digs the hole deeper.
+  if (res.status === 429) {
+    const wait = Number(res.headers.get("Retry-After") || 30);
+    throw Object.assign(new Error("rate limited by Spotify"), { retryAfter: wait });
+  }
+  if (res.status >= 500) {
+    throw Object.assign(new Error("Spotify is unavailable"), { retryAfter: 30 });
+  }
   if (!res.ok) throw new Error("session-expired");
+
   return writeTokens(await res.json());
 }
 
