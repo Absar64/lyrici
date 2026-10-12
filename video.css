@@ -1,0 +1,173 @@
+/* The music video overlay, and the small button in the header that opens it. */
+
+.meta__video {
+  flex: none;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-dim);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 999px;
+  padding: 6px 13px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+}
+
+.meta__video:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-1px);
+}
+
+.meta__video[hidden] { display: none; }
+
+.meta__video::before {
+  content: "";
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 4px 0 4px 7px;
+  border-color: transparent transparent transparent currentColor;
+}
+
+/* ---------- overlay ---------- */
+
+.video {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  background: rgba(6, 6, 8, 0.82);
+  animation: video-in 0.35s ease both;
+}
+
+.video[hidden] { display: none; }
+
+@keyframes video-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Whatever shape the video turns out to be, the gaps around it are filled
+   with the album art, blurred far past recognition — so a square or vertical
+   video looks deliberate rather than stranded in black bars. */
+.video__wash {
+  position: absolute;
+  inset: -12%;
+  background-size: cover;
+  background-position: center;
+  filter: blur(70px) saturate(1.6) brightness(0.45);
+  transform: scale(1.2);
+}
+
+/* 16:9 scaled to the largest size that still fits, so the video is as close to
+   full screen as its own shape allows. */
+.video__stage {
+  position: relative;
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: min(100vh, calc(100vw * 9 / 16));
+  overflow: hidden;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.6);
+  animation: video-rise 0.4s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+
+@supports (height: 100dvh) {
+  .video__stage {
+    width: min(100vw, calc(100dvh * 16 / 9));
+    height: min(100dvh, calc(100vw * 9 / 16));
+  }
+}
+
+@keyframes video-rise {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+.video__frame,
+.video__frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.video__close {
+  position: absolute;
+  top: max(14px, env(safe-area-inset-top));
+  right: 16px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font: inherit;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-backdrop-filter: blur(14px);
+  backdrop-filter: blur(14px);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+
+.video__close:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.06);
+}
+
+/* Sits over the stage while the lookup runs, or if nothing was found. */
+.video__note {
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: min(90vw, 40ch);
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 300;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.72);
+  pointer-events: none;
+}
+
+.video__note:empty { display: none; }
+
+.video__search {
+  pointer-events: auto;
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 8px 18px;
+  transition: background 0.25s ease;
+}
+
+.video__search:hover { background: rgba(255, 255, 255, 0.24); }
+
+@media (max-width: 560px) {
+  .meta__video { padding: 5px 10px; font-size: 0.66rem; }
+  .video__close { width: 36px; height: 36px; right: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .video, .video__stage { animation: none; }
+}

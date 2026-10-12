@@ -407,6 +407,8 @@ body {
 }
 
 .field select,
+.field input[type="text"],
+.field input[type="password"],
 .field input[type="color"] {
   font: inherit;
   font-size: 0.76rem;

@@ -27,6 +27,7 @@ export async function currentlyPlaying() {
       artist: item.artists?.map((a) => a.name).join(", ") || item.show?.name || "",
       album: item.album?.name ?? "",
       durationMs: item.duration_ms ?? 0,
+      isEpisode: body.currently_playing_type === "episode" || Boolean(item.show),
       artwork: (item.album?.images ?? item.images ?? [])[0]?.url ?? null,
     },
     isPlaying: Boolean(body.is_playing),

@@ -49,6 +49,43 @@ While your Spotify app is in development mode, only users you add under
 **User Management** in the dashboard can sign in. Add your own account there if
 the login page refuses.
 
+## Music videos
+
+While a track is playing, a **Video** button sits in the header. Pressing it
+opens the music video full screen over the lyrics: the player is sized to the
+largest 16:9 that fits, and whatever shape is left over is filled with the
+album art blurred past recognition, so a square or vertical video still looks
+deliberate. Escape, the close button, or a click on the surround dismisses it,
+which also stops playback.
+
+### It needs a YouTube API key
+
+Embedding a video by id is free, but *finding* which id requires the YouTube
+Data API. The keyless routes that used to work are both gone — song.link's
+public API now answers `PUBLIC_API_ACCESS_DEPRECATED`, and YouTube's
+`listType=search` embed answers `Error 153` — so a key is the only reliable
+way left.
+
+1. In the [Google Cloud console](https://console.cloud.google.com/), create a
+   project and enable **YouTube Data API v3**.
+2. Create an **API key** under Credentials.
+3. Restrict it to your sites (HTTP referrers), e.g.
+   `https://absar64.github.io/*` and `http://127.0.0.1:8888/*`.
+4. Paste it into **Settings -> Behaviour -> YouTube API key**.
+
+The key is kept in your browser, not in this repository. A search costs 100 of
+the free 10,000 units a day, and each track is remembered once resolved, so
+roughly 100 new songs a day. Without a key the button still opens, and offers
+a YouTube search in a new tab instead.
+
+Results are ranked rather than taken as they come: the artist's own channel and
+VEVO uploads score highest, while lyric videos, "- Topic" audio, live clips,
+covers and remixes are pushed down.
+
+**Spotify keeps playing.** The app only has read access to playback, so it
+cannot pause the track for you — pause it yourself before watching, or you
+will hear both.
+
 ## Settings
 
 Open **settings** in the status bar, or go straight to

@@ -25,6 +25,14 @@ export function createField({ label, kind, options = {}, value, onChange }) {
     input.type = "color";
     input.value = value;
     input.addEventListener("input", () => onChange(input.value));
+  } else if (kind === "text") {
+    input = document.createElement("input");
+    input.type = options.password ? "password" : "text";
+    input.value = value ?? "";
+    input.placeholder = options.placeholder ?? "";
+    input.spellcheck = false;
+    input.autocomplete = "off";
+    input.addEventListener("change", () => onChange(input.value.trim()));
   } else if (kind === "select") {
     input = document.createElement("select");
     options.choices.forEach((choice, i) => {

@@ -5,6 +5,7 @@ import { apply as applySettings, load as loadSettings, onChange as onSettingsCha
 import { createEngine, getEffect } from "./effects.js";
 import { loadSong, onChange as onEffectsChange } from "./effects-store.js";
 import { buildCues, splitWords } from "./cues.js";
+import { createVideoPlayer } from "./video.js";
 
 // Appearance and behaviour both come from the settings page. Applied before
 // anything renders so the first paint already uses the user's choices.
@@ -22,7 +23,16 @@ const el = {
   login: document.getElementById("login"),
   logout: document.getElementById("logout"),
   status: document.getElementById("status"),
+  videoOpen: document.getElementById("video-open"),
 };
+
+const video = createVideoPlayer({
+  root: document.getElementById("video"),
+  wash: document.getElementById("video-wash"),
+  frame: document.getElementById("video-frame"),
+  note: document.getElementById("video-note"),
+  close: document.getElementById("video-close"),
+}, () => cfg.youtubeKey);
 
 const bgLayers = [document.getElementById("bg-a"), document.getElementById("bg-b")];
 let bgFront = 0;
@@ -30,6 +40,7 @@ let bgImage = null;
 
 const state = {
   trackId: null,
+  track: null,    // the full track, for the video lookup
   lines: [],       // [{ time, text }] when synced lyrics exist
   nodes: [],       // rendered .line elements, index-aligned with `lines`
   words: [],       // per line, the .word spans effects are anchored to
@@ -79,6 +90,9 @@ function paintBackground(url) {
 
 function paintHeader(track) {
   el.metaBar.hidden = false;
+  state.track = track;
+  // Episodes have no music video to look for.
+  el.videoOpen.hidden = !cfg.showVideo || !track.id || Boolean(track.isEpisode);
   el.art.hidden = !track.artwork;
   if (track.artwork) el.art.src = track.artwork;
   el.title.textContent = track.name;
@@ -347,6 +361,8 @@ async function poll() {
       signOut();
       stopPolling(); // nothing to poll for once the session is gone
       el.metaBar.hidden = true;
+      el.videoOpen.hidden = true;
+      video.hide();
       clearLyrics();
       setStatus("");
       showNotice("Spotify Lyrics", "That session ended. Connect again to continue.", { withLogin: true });
@@ -378,6 +394,10 @@ document.addEventListener("visibilitychange", () => {
 
 /* ---------- wiring ---------- */
 
+el.videoOpen.addEventListener("click", () => {
+  if (state.track) video.show(state.track);
+});
+
 el.login.addEventListener("click", () => beginLogin());
 el.logout.addEventListener("click", () => {
   signOut();
@@ -400,6 +420,7 @@ onSettingsChange((next) => {
   applySettings(cfg);
   engine.setDensity(cfg.effectDensity);
   engine.setSizeScale(cfg.effectScale);
+  if (state.track) el.videoOpen.hidden = !cfg.showVideo;
   requestAnimationFrame(recentre);
 });
 

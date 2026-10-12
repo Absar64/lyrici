@@ -76,6 +76,8 @@ const SCHEMA = [
   ]],
 
   ["Behaviour", [
+    ["showVideo", "Show video button", "toggle"],
+    ["youtubeKey", "YouTube API key", "text", { placeholder: "needed to find videos", password: true }],
     ["showFooter", "Show status bar", "toggle"],
     ["pollMs", "Spotify poll interval", "range", { min: 2000, max: 30000, step: 500, unit: "ms" }],
   ]],

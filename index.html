@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600&family=Nunito:wght@300;400;500;600&family=Manrope:wght@300;400;500;600&family=Comfortaa:wght@300;400;500;600&family=Figtree:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 <link rel="stylesheet" href="effects.css" />
+<link rel="stylesheet" href="video.css" />
 </head>
 <body>
   <div class="bg" id="bg-a"></div>
@@ -23,6 +24,7 @@
         <div class="meta__title" id="title"></div>
         <div class="meta__artist" id="artist"></div>
       </div>
+      <button class="meta__video" id="video-open" type="button" hidden>Video</button>
     </header>
 
     <section class="stage" id="stage">
@@ -46,6 +48,15 @@
   </main>
 
   <canvas class="fx fx--front" id="fx-front"></canvas>
+
+  <div class="video" id="video" hidden>
+    <div class="video__wash" id="video-wash"></div>
+    <div class="video__stage">
+      <div class="video__frame" id="video-frame"></div>
+    </div>
+    <p class="video__note" id="video-note"></p>
+    <button class="video__close" id="video-close" type="button" aria-label="Close video">✕</button>
+  </div>
 
   <script src="app.js" type="module"></script>
 </body>

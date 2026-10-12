@@ -51,6 +51,8 @@ export const DEFAULTS = {
   artistSize: 0.78,        // rem
 
   // behaviour
+  showVideo: true,         // the music video button in the header
+  youtubeKey: "",          // YouTube Data API key, needed to find videos
   showFooter: true,
   // Between polls the position is carried by the local clock, so asking more
   // often than this buys accuracy nobody can perceive and spends rate limit.
