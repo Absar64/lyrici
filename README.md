@@ -58,29 +58,42 @@ album art blurred past recognition, so a square or vertical video still looks
 deliberate. Escape, the close button, or a click on the surround dismisses it,
 which also stops playback.
 
-### It needs a YouTube API key
+### How the video is found
 
-Embedding a video by id is free, but *finding* which id requires the YouTube
-Data API. The keyless routes that used to work are both gone — song.link's
-public API now answers `PUBLIC_API_ACCESS_DEPRECATED`, and YouTube's
-`listType=search` embed answers `Error 153` — so a key is the only reliable
-way left.
+No API key is involved. YouTube's own results page for "<track> <artist> music
+video" is fetched through a rendering proxy (`r.jina.ai`, with
+`api.allorigins.win` as a second try) and the first result is taken — the same
+video you would land on by typing those words into YouTube yourself. A browser
+cannot fetch youtube.com directly, because CORS forbids it, hence the proxy.
+The song title and artist therefore pass through that proxy; nothing else does.
 
-1. In the [Google Cloud console](https://console.cloud.google.com/), create a
-   project and enable **YouTube Data API v3**.
-2. Create an **API key** under Credentials.
-3. Restrict it to your sites (HTTP referrers), e.g.
-   `https://absar64.github.io/*` and `http://127.0.0.1:8888/*`.
-4. Paste it into **Settings -> Behaviour -> YouTube API key**.
+Playback uses the IFrame Player API, which is a JavaScript library rather than
+the Data API, so it needs no key either, and it reports when the video ends —
+which is what closes the popup by itself and hands the screen back to the
+lyrics.
 
-The key is kept in your browser, not in this repository. A search costs 100 of
-the free 10,000 units a day, and each track is remembered once resolved, so
-roughly 100 new songs a day. Without a key the button still opens, and offers
-a YouTube search in a new tab instead.
+A key can still be set in Settings as a fallback for when the proxies are down,
+but it is not required and is empty by default.
 
-Results are ranked rather than taken as they come: the artist's own channel and
-VEVO uploads score highest, while lyric videos, "- Topic" audio, live clips,
-covers and remixes are pushed down.
+### What cannot be done, and why
+
+**Many official music videos refuse to play outside YouTube.** The rights
+holder can disable embedding, and for major-label music videos they usually
+do: Queen's official upload answers error 150, "playback disabled outside
+YouTube", enforced by YouTube rather than by this app. When that happens the
+popup says so and offers to open the real video on YouTube.
+
+The obvious workaround is to fall through to the next search result, but those
+are re-uploads on channels the artist has nothing to do with. This app does
+not do that: it would be showing a copy the artist did not put there in place
+of the one they did.
+
+**An embed cannot reliably use your YouTube Premium account.** A player inside
+another site only sees your login if the browser allows youtube.com cookies in
+a third-party context. Safari and iOS block that outright and Chrome is
+narrowing it, so an embed may well show ads even while you are paying not to.
+Opening the video on YouTube — which the popup offers — is the one route that
+always uses your account.
 
 **Spotify keeps playing.** The app only has read access to playback, so it
 cannot pause the track for you — pause it yourself before watching, or you

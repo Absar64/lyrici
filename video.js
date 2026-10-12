@@ -1,84 +1,130 @@
 // Finding and showing the music video for the track that is playing.
 //
-// Embedding a video by id is free, but finding which id needs the YouTube Data
-// API, so a key is required. The keyless routes that used to exist are gone:
-// song.link's public API now answers PUBLIC_API_ACCESS_DEPRECATED, and
-// YouTube's listType=search embed answers "Error 153". Rather than guess, the
-// key lives in Settings and the button falls back to opening a search.
+// Resolution is keyless by default: YouTube's own search page is fetched
+// through a CORS proxy and the first result is taken, which is what you would
+// get by typing the same words into YouTube. A browser cannot fetch
+// youtube.com directly — CORS forbids it — hence the proxy.
+//
+// Playback uses the IFrame Player API rather than a bare iframe. That is a
+// JavaScript library, not the Data API, so it needs no key either, and it
+// reports when the video ends, which is what lets the popup close itself.
 
-const SEARCH = "https://www.googleapis.com/youtube/v3/search";
+const IFRAME_API = "https://www.youtube.com/iframe_api";
 
-// Resolved ids per track, so reopening a video costs no quota. A search is
-// 100 units of a 10,000/day allowance, which is ~100 distinct songs a day.
+// Tried in order. Each takes a URL and returns that page's body.
+// r.jina.ai is first because it renders the page before returning it: YouTube
+// serves a bare JavaScript shell to plain fetchers, and a raw proxy comes back
+// with a document containing no results at all.
+const PROXIES = [
+  (url) => `https://r.jina.ai/${url}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+];
+
+// Resolved ids per track, so reopening a video costs no second lookup.
 const resolved = new Map();
 
-/**
- * Rank candidates so the artist's own upload wins over the lyric videos,
- * covers and reaction clips that a plain search turns up.
- */
-function rank(item, track) {
-  const channel = (item.snippet?.channelTitle ?? "").toLowerCase();
-  const title = (item.snippet?.title ?? "").toLowerCase();
-  const artist = track.artist.split(",")[0].trim().toLowerCase();
+function searchTerms(track) {
+  // The artist is included because song titles collide constantly, and the
+  // point is this artist's video rather than someone else's song of the name.
+  return `${track.name} ${track.artist} music video`;
+}
 
-  let score = 0;
-  if (artist && channel.includes(artist)) score += 5;
-  if (channel.endsWith("vevo")) score += 4;
-  if (title.includes("official music video")) score += 4;
-  else if (title.includes("official video")) score += 3;
-  else if (title.includes("official")) score += 1;
+function searchUrl(track) {
+  return `https://www.youtube.com/results?search_query=${encodeURIComponent(searchTerms(track))}`;
+}
 
-  // "- Topic" channels are auto-generated audio, not a video.
-  if (channel.endsWith("- topic")) score -= 4;
-  if (/lyrics?\b/.test(title)) score -= 2;
-  if (/\b(live|cover|reaction|karaoke|remix|sped up|slowed)\b/.test(title)) score -= 3;
+/** First video id in a YouTube results page, which is its first result. */
+function firstVideoId(html) {
+  const direct = html.match(/"videoId"\s*:\s*"([\w-]{11})"/);
+  if (direct) return direct[1];
+  const link = html.match(/watch\?v=([\w-]{11})/);
+  return link ? link[1] : null;
+}
 
-  return score;
+async function lookUpKeyless(track) {
+  const target = searchUrl(track);
+
+  for (const proxy of PROXIES) {
+    try {
+      const res = await fetch(proxy(target), { headers: { Accept: "text/html,text/plain" } });
+      if (!res.ok) continue;
+      const id = firstVideoId(await res.text());
+      if (id) return id;
+    } catch {
+      // Proxies come and go; try the next one before giving up.
+    }
+  }
+
+  return null;
+}
+
+// Kept as a fallback for anyone who would rather use their own key than a
+// public proxy: it is more precise, but it is not required.
+async function lookUpWithKey(track, apiKey) {
+  const params = new URLSearchParams({
+    part: "snippet",
+    type: "video",
+    videoEmbeddable: "true",
+    maxResults: "1",
+    q: searchTerms(track),
+    key: apiKey,
+  });
+
+  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?${params}`);
+  if (!res.ok) return null;
+
+  const body = await res.json();
+  return body?.items?.[0]?.id?.videoId ?? null;
 }
 
 async function lookUp(track, apiKey) {
   if (resolved.has(track.id)) return resolved.get(track.id);
 
-  const params = new URLSearchParams({
-    part: "snippet",
-    type: "video",
-    videoEmbeddable: "true",
-    maxResults: "8",
-    q: `${track.artist} ${track.name} official video`,
-    key: apiKey,
-  });
+  let id = await lookUpKeyless(track);
+  if (!id && apiKey) id = await lookUpWithKey(track, apiKey);
 
-  const res = await fetch(`${SEARCH}?${params}`);
-
-  if (res.status === 403) {
-    throw new Error("YouTube refused the key — check it is valid and its quota is not spent.");
-  }
-  if (res.status === 400) throw new Error("YouTube rejected the request. Check the API key in Settings.");
-  if (!res.ok) throw new Error("YouTube could not be reached just now.");
-
-  const body = await res.json();
-  const items = Array.isArray(body.items) ? body.items : [];
-  const best = items
-    .map((item) => ({ item, score: rank(item, track) }))
-    .sort((a, b) => b.score - a.score)[0];
-
-  const id = best?.item?.id?.videoId ?? null;
   resolved.set(track.id, id);
   return id;
 }
 
-function searchUrl(track) {
-  return `https://www.youtube.com/results?search_query=${encodeURIComponent(`${track.artist} ${track.name} official video`)}`;
+/** Loads the IFrame Player API once and resolves when it is ready to use. */
+let apiReady = null;
+
+function loadPlayerApi() {
+  if (apiReady) return apiReady;
+
+  apiReady = new Promise((resolve, reject) => {
+    if (window.YT?.Player) {
+      resolve(window.YT);
+      return;
+    }
+
+    const previous = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      previous?.();
+      resolve(window.YT);
+    };
+
+    const script = document.createElement("script");
+    script.src = IFRAME_API;
+    script.async = true;
+    script.onerror = () => reject(new Error("YouTube's player could not be loaded."));
+    document.head.append(script);
+  });
+
+  return apiReady;
 }
 
 /**
  * @param {{root: HTMLElement, wash: HTMLElement, frame: HTMLElement,
  *          note: HTMLElement, close: HTMLElement}} el
+ * @param {() => string} apiKey optional YouTube Data API key
  */
 export function createVideoPlayer(el, apiKey = () => "") {
   let open = false;
+  let player = null;
 
-  function setNote(text, track) {
+  function setNote(text, track, videoId) {
     el.note.replaceChildren();
     if (!text) return;
 
@@ -87,28 +133,72 @@ export function createVideoPlayer(el, apiKey = () => "") {
     el.note.append(line);
 
     if (track) {
-      // Opening a search is left to a deliberate click rather than happening
-      // on its own, since it leaves the app.
+      // Opening on YouTube proper is also the one route that uses the account
+      // already signed in there, so Premium applies and there are no ads.
+      // Leaving the app is left to a deliberate click.
       const link = document.createElement("a");
       link.className = "video__search";
-      link.href = searchUrl(track);
+      link.href = videoId ? `https://www.youtube.com/watch?v=${videoId}` : searchUrl(track);
       link.target = "_blank";
       link.rel = "noopener noreferrer";
-      link.textContent = "Search YouTube";
+      link.textContent = videoId ? "Watch on YouTube" : "Search YouTube";
       el.note.append(link);
     }
   }
 
-  function play(id) {
-    const frame = document.createElement("iframe");
-    // Built in response to the button press, so the browser counts this as a
-    // user gesture and lets it start with sound.
-    frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&playsinline=1&rel=0&modestbranding=1&iv_load_policy=3`;
-    frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
-    frame.allowFullscreen = true;
-    frame.referrerPolicy = "strict-origin-when-cross-origin";
-    frame.title = "Music video";
-    el.frame.replaceChildren(frame);
+  function destroyPlayer() {
+    try {
+      player?.destroy();
+    } catch {
+      // Already gone; nothing to do.
+    }
+    player = null;
+    el.frame.replaceChildren();
+  }
+
+  async function play(id, track) {
+    const YT = await loadPlayerApi();
+    if (!open) return;
+
+    const mount = document.createElement("div");
+    el.frame.replaceChildren(mount);
+
+    player = new YT.Player(mount, {
+      videoId: id,
+      playerVars: {
+        // Created from the button press, so the gesture allows sound.
+        autoplay: 1,
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        origin: location.origin,
+      },
+      events: {
+        onReady: (event) => event.target.playVideo(),
+        onStateChange: (event) => {
+          // Closing on the end hands the screen back to the lyrics by itself.
+          if (event.data === YT.PlayerState.ENDED) hide();
+        },
+        // 101 and 150 both mean the rights holder has turned off playback
+        // outside YouTube, which is common for major-label music videos.
+        // Nothing can be done about that from here, and the obvious
+        // workaround — playing an unofficial re-upload instead — means
+        // showing a copy the artist did not put there, so the offer is to
+        // open the real one on YouTube, where a Premium account applies.
+        onError: (event) => {
+          const code = event.data;
+          destroyPlayer();
+          if (code === 101 || code === 150) {
+            setNote("The artist does not allow this video to play outside YouTube.", track, id);
+          } else if (code === 100) {
+            setNote("That video is no longer available.", track);
+          } else {
+            setNote("That video could not be played here.", track, id);
+          }
+        },
+      },
+    });
   }
 
   async function show(track) {
@@ -119,25 +209,18 @@ export function createVideoPlayer(el, apiKey = () => "") {
     // The blurred artwork fills whatever the video's shape leaves over.
     el.wash.style.backgroundImage = track.artwork ? `url("${track.artwork}")` : "none";
 
-    el.frame.replaceChildren();
-
-    const key = apiKey();
-    if (!key) {
-      setNote("Add a YouTube API key in Settings to play videos here.", track);
-      return;
-    }
-
+    destroyPlayer();
     setNote("Finding the video…");
 
     try {
-      const id = await lookUp(track, key);
+      const id = await lookUp(track, apiKey());
       if (!open) return; // closed while the lookup was in flight
 
       if (id) {
-        play(id);
         setNote("");
+        await play(id, track);
       } else {
-        setNote("No official video is listed for this track.", track);
+        setNote("That search turned up nothing playable.", track);
       }
     } catch (err) {
       if (open) setNote(err.message, track);
@@ -148,7 +231,7 @@ export function createVideoPlayer(el, apiKey = () => "") {
     open = false;
     el.root.hidden = true;
     document.body.classList.remove("is-video-open");
-    el.frame.replaceChildren(); // removing the iframe is what stops the audio
+    destroyPlayer(); // this is what stops the audio
     setNote("");
   }
 
