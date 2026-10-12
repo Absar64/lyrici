@@ -87,6 +87,25 @@ async function lookUp(track, apiKey) {
   return id;
 }
 
+/**
+ * Resolve a track's video ahead of time, so pressing the button opens an
+ * already-known video instead of waiting on a proxy. Failures are swallowed:
+ * this is speculative work and the button will simply look it up again.
+ */
+export async function prefetchVideo(track, apiKey = "") {
+  try {
+    await lookUp(track, apiKey);
+  } catch {
+    // Nothing to report; the lookup will be retried on demand.
+  }
+}
+
+/** Where to send someone who wants this track on YouTube proper. */
+export function youtubeUrlFor(track) {
+  const id = resolved.get(track.id);
+  return id ? `https://www.youtube.com/watch?v=${id}` : searchUrl(track);
+}
+
 /** Loads the IFrame Player API once and resolves when it is ready to use. */
 let apiReady = null;
 

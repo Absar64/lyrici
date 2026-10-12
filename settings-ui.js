@@ -77,6 +77,8 @@ const SCHEMA = [
 
   ["Behaviour", [
     ["showVideo", "Show video button", "toggle"],
+    ["videoTarget", "Play videos", "select", { choices: ["popup", "youtube"], labels: ["in a popup", "on YouTube (no ads)"] }],
+    ["youtubeSignIn", "YouTube account", "link", { href: "https://www.youtube.com/account", label: "Sign in on YouTube" }],
     ["youtubeKey", "YouTube API key", "text", { placeholder: "optional fallback", password: true }],
     ["showFooter", "Show status bar", "toggle"],
     ["pollMs", "Spotify poll interval", "range", { min: 2000, max: 30000, step: 500, unit: "ms" }],

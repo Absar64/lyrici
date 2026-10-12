@@ -52,6 +52,9 @@ export const DEFAULTS = {
 
   // behaviour
   showVideo: true,         // the music video button in the header
+  // "popup" plays in the app; "youtube" opens the real site, which is the
+  // only place a Premium account reliably applies.
+  videoTarget: "popup",
   youtubeKey: "",          // YouTube Data API key, needed to find videos
   showFooter: true,
   // Between polls the position is carried by the local clock, so asking more

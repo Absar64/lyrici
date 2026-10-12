@@ -25,6 +25,14 @@ export function createField({ label, kind, options = {}, value, onChange }) {
     input.type = "color";
     input.value = value;
     input.addEventListener("input", () => onChange(input.value));
+  } else if (kind === "link") {
+    // A row that goes somewhere rather than holding a value.
+    input = document.createElement("a");
+    input.className = "field__link";
+    input.href = options.href;
+    input.target = "_blank";
+    input.rel = "noopener noreferrer";
+    input.textContent = options.label ?? "Open";
   } else if (kind === "text") {
     input = document.createElement("input");
     input.type = options.password ? "password" : "text";

@@ -420,6 +420,19 @@ body {
   border-radius: 7px;
 }
 
+.field__link {
+  font-size: 0.74rem;
+  text-align: center;
+  padding: 7px 8px;
+  color: inherit;
+  text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 7px;
+}
+
+.field__link:hover { background: rgba(255, 255, 255, 0.16); }
+
 .field input[type="color"] {
   padding: 2px;
   height: 28px;

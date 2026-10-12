@@ -5,7 +5,7 @@ import { apply as applySettings, load as loadSettings, onChange as onSettingsCha
 import { createEngine, getEffect } from "./effects.js";
 import { loadSong, onChange as onEffectsChange } from "./effects-store.js";
 import { buildCues, splitWords } from "./cues.js";
-import { createVideoPlayer } from "./video.js";
+import { createVideoPlayer, prefetchVideo, youtubeUrlFor } from "./video.js";
 
 // Appearance and behaviour both come from the settings page. Applied before
 // anything renders so the first paint already uses the user's choices.
@@ -292,6 +292,21 @@ async function loadTrack(track) {
   }
 }
 
+// Looking the video up while the song plays means the button opens straight
+// into it. Three seconds in is late enough to know the track is really being
+// listened to rather than skipped past.
+const PREFETCH_AFTER_MS = 3000;
+let prefetchedFor = null;
+
+function maybePrefetchVideo() {
+  if (!cfg.showVideo || !state.track || state.track.isEpisode) return;
+  if (prefetchedFor === state.trackId) return;
+  if (estimatedPositionMs() < PREFETCH_AFTER_MS) return;
+
+  prefetchedFor = state.trackId;
+  prefetchVideo(state.track, cfg.youtubeKey);
+}
+
 /* ---------- polling ----------
    Spotify counts requests per app across a rolling window, so an idle tab left
    open is what exhausts the budget, not actually watching lyrics. The loop
@@ -349,6 +364,7 @@ async function poll() {
 
     // While paused the position cannot drift, so there is nothing to correct.
     if (!now.isPlaying) delay = Math.max(cfg.pollMs, IDLE_MS);
+    else maybePrefetchVideo();
 
     if (now.track.id !== state.trackId) {
       state.trackId = now.track.id;
@@ -395,7 +411,16 @@ document.addEventListener("visibilitychange", () => {
 /* ---------- wiring ---------- */
 
 el.videoOpen.addEventListener("click", () => {
-  if (state.track) video.show(state.track);
+  if (!state.track) return;
+
+  // Opening YouTube proper is the only route that uses the account signed in
+  // there, so a Premium subscription applies and no ads play.
+  if (cfg.videoTarget === "youtube") {
+    window.open(youtubeUrlFor(state.track), "_blank", "noopener");
+    return;
+  }
+
+  video.show(state.track);
 });
 
 el.login.addEventListener("click", () => beginLogin());

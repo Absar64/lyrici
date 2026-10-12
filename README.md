@@ -92,8 +92,28 @@ of the one they did.
 another site only sees your login if the browser allows youtube.com cookies in
 a third-party context. Safari and iOS block that outright and Chrome is
 narrowing it, so an embed may well show ads even while you are paying not to.
-Opening the video on YouTube — which the popup offers — is the one route that
-always uses your account.
+
+No sign-in can change this. Signing into Google from this app would identify
+you *to this app*; it has no bearing on the cookies the iframe is allowed to
+send, which is what decides whether YouTube knows you are a subscriber. The
+two things that do work:
+
+- **Settings -> Behaviour -> Play videos -> on YouTube.** The button then
+  opens the video on youtube.com in a new tab, in the browser you are already
+  signed into, so Premium applies and nothing is embedded at all. This is the
+  reliable way to avoid ads.
+- **Allow third-party cookies for youtube.com**, if your browser still offers
+  it (desktop Chrome: Settings -> Privacy -> Third-party cookies -> add
+  `[*.]youtube.com` as an exception). The in-app player then sees your
+  account. There is a **Sign in on YouTube** link in Settings for establishing
+  that session in the first place.
+
+## Prefetching
+
+Once a track has been playing for three seconds, its video is looked up in the
+background, so pressing the button opens an already-known video instead of
+waiting on a proxy. Three seconds is late enough to tell listening from
+skipping, and the result is cached per track, so it happens once.
 
 **Spotify keeps playing.** The app only has read access to playback, so it
 cannot pause the track for you — pause it yourself before watching, or you
